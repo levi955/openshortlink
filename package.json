@@ -1,0 +1,23 @@
+{
+  "name": "ultimate-mine-bot",
+  "version": "1.0.0",
+  "description": "Educational mining game automation bot with advanced analysis capabilities",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "demo": "node demo.js",
+    "test": "node test.js",
+    "install-browsers": "npx playwright install chromium"
+  },
+  "keywords": ["minesweeper", "automation", "bot", "educational"],
+  "author": "",
+  "license": "ISC",
+  "bin": {
+    "mine-bot": "./index.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "playwright": "^1.55.0",
+    "readline-sync": "^1.4.10"
+  }
+}
