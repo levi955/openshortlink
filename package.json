@@ -1,0 +1,37 @@
+{
+  "name": "ultimate-mine-bot",
+  "version": "1.0.0",
+  "description": "Advanced mining bot for web-based mining games with intelligent algorithms and automation",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js --dev",
+    "test": "echo \"Tests not yet implemented\" && exit 0"
+  },
+  "keywords": [
+    "mining",
+    "bot",
+    "automation",
+    "puppeteer",
+    "game",
+    "ai"
+  ],
+  "author": "Ultimate Mine Bot Team",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^22.15.0",
+    "dotenv": "^16.4.5",
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/levi955/ultimate-mine-bot.git"
+  }
+}
