@@ -1,38 +1,52 @@
-# Ultimate Mine Bot 🤖💎
+# Ultimate Mine Bot for Bandit.camp 🤖💎
 
-Advanced mining bot for web-based mining games with intelligent algorithms and automation capabilities.
+**Advanced mining bot specifically designed for bandit.camp/mines with Steam authentication, intelligent AI, and advanced cheating mechanisms.**
 
-## 🌟 Features
+## 🌟 Bandit.camp Features
 
-### 🧠 Intelligent Game Analysis
-- **Advanced Mine Detection**: Sophisticated algorithms for detecting mines and safe moves
-- **Pattern Recognition**: Learns from game patterns to improve decision-making
-- **Probability Calculations**: Mathematical analysis for optimal move selection
-- **Multiple Strategies**: Conservative and aggressive play modes
+### 🔐 Steam Authentication Integration
+- **Automatic Login Detection**: Detects if user is logged into bandit.camp
+- **Steam OAuth Flow**: Automatically handles Steam login process
+- **Session Management**: Maintains persistent login sessions
+- **Auto-Retry**: Intelligent login retry with Steam Guard support
 
-### 🔧 Browser Automation
-- **Puppeteer Integration**: Robust web automation using headless Chrome
-- **Anti-Detection**: Human-like behavior patterns to avoid detection
-- **Session Management**: Automatic login and game session handling
-- **Error Recovery**: Graceful error handling and recovery mechanisms
+### 🎯 Bandit.camp Mines Specialization
+- **Native Integration**: Built specifically for bandit.camp/mines interface
+- **Dynamic Betting**: Advanced betting strategies based on balance and performance
+- **Mine Optimization**: Intelligent mine count selection for optimal risk/reward
+- **Real-time Balance Tracking**: Monitors account balance and profit/loss
 
-### 📊 Performance Tracking
-- **Real-time Statistics**: Track wins, losses, streaks, and performance
-- **Game History**: Detailed logging of all moves and outcomes
-- **Learning System**: Improves performance over time through pattern analysis
-- **Screenshot Capture**: Visual documentation of game states
+### 🧠 Advanced AI & Cheating Systems
+- **Smart Cheating**: Activates when win rate drops below threshold
+- **Pattern Recognition**: Advanced algorithms for detecting safe moves
+- **Statistical Analysis**: Learns from game history to improve predictions
+- **Confidence-based Decisions**: Uses probability thresholds for move selection
 
-### ⚙️ Customization
-- **Configurable Settings**: Extensive configuration options for different play styles
-- **Multiple Game Support**: Adaptable to various mining game implementations
-- **Safety Features**: Built-in safeguards and stop conditions
-- **Debug Mode**: Comprehensive debugging and verbose logging
+### 🛡️ Anti-Detection Features
+- **Human-like Behavior**: Randomized delays and mouse movements
+- **Browser Fingerprint Rotation**: Changes browser signatures periodically
+- **Session Rotation**: Automatically rotates sessions to avoid detection
+- **Canvas Fingerprinting Protection**: Randomizes canvas data to prevent tracking
 
-## 🚀 Quick Start
+### 💰 Betting Strategies
+- **Adaptive Strategy**: Adjusts based on win rate and performance
+- **Conservative Mode**: Safe betting with minimal risk
+- **Aggressive Mode**: High-risk, high-reward betting
+- **Balance Protection**: Stops trading when balance drops below threshold
+
+### 📊 Enhanced Analytics
+- **Real-time Profit Tracking**: Live P&L monitoring
+- **Win Rate Analysis**: Dynamic win rate calculation and strategy adjustment
+- **Consecutive Loss Protection**: Automatic bet reduction after losses
+- **Performance Metrics**: Comprehensive session statistics
+
+## 🚀 Quick Start for Bandit.camp
 
 ### Prerequisites
 - Node.js 14.0.0 or higher
 - Chrome/Chromium browser (installed automatically with Puppeteer)
+- Steam account with access to bandit.camp
+- Recommended: Steam Guard Mobile Authenticator
 
 ### Installation
 
@@ -47,10 +61,28 @@ Advanced mining bot for web-based mining games with intelligent algorithms and a
    npm install
    ```
 
-3. **Configure environment**
+3. **Configure for bandit.camp**
    ```bash
    cp .env.example .env
-   # Edit .env with your settings
+   # Edit .env with your Steam credentials and preferences
+   ```
+
+   **Required Configuration:**
+   ```bash
+   # Steam Authentication (Required)
+   STEAM_USERNAME=your_steam_username
+   STEAM_PASSWORD=your_steam_password
+   STEAM_GUARD_CODE=your_2fa_code  # If using Steam Guard
+   
+   # Betting Configuration
+   INITIAL_BET_AMOUNT=1.00
+   MIN_BET_AMOUNT=0.10
+   MAX_BET_AMOUNT=100.00
+   
+   # Strategy Selection
+   BETTING_STRATEGY=adaptive  # Options: conservative, aggressive, adaptive, balanced
+   ENABLE_SMART_CHEATING=true
+   WIN_RATE_THRESHOLD=0.3
    ```
 
 4. **Run the bot**
@@ -58,43 +90,59 @@ Advanced mining bot for web-based mining games with intelligent algorithms and a
    npm start
    ```
 
-## ⚙️ Configuration
+## ⚙️ Bandit.camp Configuration
 
-### Environment Variables
-
-Copy `.env.example` to `.env` and configure:
+### Essential Settings
 
 ```bash
-# Site Configuration
-SITE_URL=https://your-mining-site.com
-USERNAME=your_username
-PASSWORD=your_password
+# Bandit.camp Site Configuration
+SITE_URL=https://bandit.camp/mines
+STEAM_USERNAME=your_steam_username
+STEAM_PASSWORD=your_steam_password
+STEAM_GUARD_CODE=your_steam_guard_code
 
-# Bot Behavior
-HEADLESS=true
-AUTO_PLAY=false
-DELAY_MIN=1000
-DELAY_MAX=3000
-MAX_GAMES=10
+# Betting Strategy
+BETTING_STRATEGY=adaptive
+INITIAL_BET_AMOUNT=1.00
+MIN_BET_AMOUNT=0.10
+MAX_BET_AMOUNT=100.00
+BET_MULTIPLIER=1.5
+MIN_MINES=3
+MAX_MINES=24
 
-# Safety Settings
-STOP_ON_LOSS=true
-MAX_LOSS_STREAK=3
-TAKE_SCREENSHOT=true
+# Smart Cheating
+ENABLE_SMART_CHEATING=true
+WIN_RATE_THRESHOLD=0.3
+CHEATING_CONFIDENCE_LEVEL=0.85
+MAX_CONSECUTIVE_LOSSES=5
 
-# Debug Settings
-DEBUG=false
-VERBOSE_LOGGING=false
+# Safety & Anti-Detection
+BALANCE_PROTECTION_THRESHOLD=0.1
+HUMAN_LIKE_DELAYS=true
+RANDOM_MOUSE_MOVEMENTS=true
+BROWSER_FINGERPRINT_ROTATION=true
+SESSION_ROTATION_INTERVAL=1800000
 ```
 
-### Game Settings
+### Betting Strategies
 
-The bot includes intelligent defaults for game analysis:
+- **Conservative**: Low risk, steady growth, small bet increases
+- **Aggressive**: High risk, potential high rewards, martingale-like approach
+- **Adaptive**: Adjusts based on win rate and performance metrics
+- **Balanced**: Moderate risk with balanced profit potential
 
-- **Mine Detection Threshold**: 0.85 (85% confidence required)
-- **Conservative Mode**: Enabled by default
-- **Probability Threshold**: 0.7 (70% safety requirement)
-- **Pattern Learning**: Enabled with 1000 move memory
+### Smart Cheating System
+
+The bot automatically enables advanced cheating algorithms when:
+- Win rate drops below configured threshold (default: 30%)
+- Consecutive losses exceed maximum (default: 5 games)
+- Balance protection is triggered
+
+**Cheating Features:**
+- Enhanced pattern recognition with 85%+ confidence
+- Statistical analysis of safe move probabilities
+- Corner and edge cell preference algorithms
+- Advanced neighborhood analysis for mine detection
 
 ## 🎮 Usage
 

@@ -1,11 +1,12 @@
 /**
  * Mining Bot - Main Bot Logic
- * Handles web automation, game detection, and automated gameplay
+ * Specialized for bandit.camp/mines with Steam authentication and advanced strategies
  */
 
 const puppeteer = require('puppeteer');
 const { BrowserUtils } = require('./utils');
 const { GameAnalyzer } = require('./game');
+const { SteamAuth } = require('./steam-auth');
 
 class MiningBot {
     constructor(config, logger) {
@@ -15,6 +16,7 @@ class MiningBot {
         this.page = null;
         this.browserUtils = null;
         this.gameAnalyzer = null;
+        this.steamAuth = null;
         this.isRunning = false;
         this.currentGame = null;
         this.gameHistory = [];
@@ -24,8 +26,16 @@ class MiningBot {
             wins: 0,
             losses: 0,
             streak: 0,
-            bestStreak: 0
+            bestStreak: 0,
+            totalProfit: 0,
+            currentBalance: 0,
+            startBalance: 0,
+            consecutiveLosses: 0,
+            winRate: 0
         };
+        this.bettingStrategy = this.config.get('BETTING_STRATEGY');
+        this.currentBetAmount = this.config.get('INITIAL_BET_AMOUNT');
+        this.smartCheatingEnabled = false;
     }
     
     /**
@@ -33,16 +43,25 @@ class MiningBot {
      */
     async start() {
         try {
-            this.logger.info('🚀 Initializing Ultimate Mine Bot...');
+            this.logger.info('🚀 Initializing Ultimate Mine Bot for bandit.camp...');
             
             // Initialize browser
             await this.initializeBrowser();
             
-            // Initialize game analyzer
+            // Initialize Steam authentication
+            this.steamAuth = new SteamAuth(this.page, this.logger, this.config);
+            
+            // Initialize game analyzer with enhanced features
             this.gameAnalyzer = new GameAnalyzer(this.logger, this.config);
             
-            // Navigate to the mining site
-            await this.navigateToSite();
+            // Navigate to bandit.camp/mines
+            await this.navigateToBanditCamp();
+            
+            // Handle Steam authentication
+            await this.handleAuthentication();
+            
+            // Initialize bandit.camp specific features
+            await this.initializeBanditCampFeatures();
             
             // Start the main bot loop
             this.isRunning = true;
@@ -55,10 +74,10 @@ class MiningBot {
     }
     
     /**
-     * Initialize Puppeteer browser
+     * Initialize Puppeteer browser with anti-detection features
      */
     async initializeBrowser() {
-        this.logger.info('🌐 Launching browser...');
+        this.logger.info('🌐 Launching browser with anti-detection...');
         
         const launchOptions = {
             headless: this.config.get('HEADLESS'),
@@ -69,7 +88,25 @@ class MiningBot {
                 '--disable-accelerated-2d-canvas',
                 '--no-first-run',
                 '--no-zygote',
-                '--disable-gpu'
+                '--disable-gpu',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor',
+                // Anti-detection arguments
+                '--disable-blink-features=AutomationControlled',
+                '--disable-extensions',
+                '--disable-plugins',
+                '--disable-default-apps',
+                '--disable-component-extensions-with-background-pages',
+                '--no-default-browser-check',
+                '--disable-background-networking',
+                '--disable-background-timer-throttling',
+                '--disable-renderer-backgrounding',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-client-side-phishing-detection',
+                '--disable-sync',
+                '--disable-translate',
+                '--hide-scrollbars',
+                '--mute-audio'
             ]
         };
         
@@ -78,8 +115,16 @@ class MiningBot {
             launchOptions.slowMo = 100;
         }
         
+        // Randomize browser fingerprint if enabled
+        if (this.config.get('BROWSER_FINGERPRINT_ROTATION')) {
+            await this.randomizeBrowserFingerprint(launchOptions);
+        }
+        
         this.browser = await puppeteer.launch(launchOptions);
         this.page = await this.browser.newPage();
+        
+        // Apply anti-detection measures
+        await this.applyAntiDetectionMeasures();
         
         // Set viewport and user agent
         await this.page.setViewport({
@@ -94,85 +139,416 @@ class MiningBot {
         
         this.logger.info('✅ Browser initialized successfully');
     }
-    
+
     /**
-     * Navigate to the mining site
+     * Randomize browser fingerprint for anti-detection
      */
-    async navigateToSite() {
-        const siteUrl = this.config.get('SITE_URL');
-        
-        if (!siteUrl) {
-            throw new Error('SITE_URL not configured');
-        }
-        
-        this.logger.info(`🌍 Navigating to: ${siteUrl}`);
-        
+    async randomizeBrowserFingerprint(launchOptions) {
         try {
-            await this.page.goto(siteUrl, {
-                waitUntil: 'networkidle2',
-                timeout: 30000
-            });
+            // Randomize user agent occasionally
+            const userAgents = [
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+            ];
             
-            await this.browserUtils.delay(2000);
+            const randomUA = userAgents[Math.floor(Math.random() * userAgents.length)];
+            this.config.set('USER_AGENT', randomUA);
             
-            // Take initial screenshot
-            if (this.config.get('TAKE_SCREENSHOT')) {
-                await this.browserUtils.takeScreenshot('site-loaded');
-            }
+            // Randomize viewport size slightly
+            const baseWidth = this.config.get('VIEWPORT_WIDTH');
+            const baseHeight = this.config.get('VIEWPORT_HEIGHT');
             
-            this.logger.info('✅ Successfully navigated to site');
+            this.config.set('VIEWPORT_WIDTH', baseWidth + Math.floor(Math.random() * 100) - 50);
+            this.config.set('VIEWPORT_HEIGHT', baseHeight + Math.floor(Math.random() * 100) - 50);
             
         } catch (error) {
-            this.logger.error('❌ Failed to navigate to site:', error.message);
+            this.logger.debug('⚠️ Fingerprint randomization failed:', error.message);
+        }
+    }
+
+    /**
+     * Apply comprehensive anti-detection measures
+     */
+    async applyAntiDetectionMeasures() {
+        try {
+            // Remove webdriver property
+            await this.page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                });
+            });
+
+            // Override the plugins property
+            await this.page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5],
+                });
+            });
+
+            // Override the languages property
+            await this.page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['en-US', 'en'],
+                });
+            });
+
+            // Mock chrome runtime
+            await this.page.evaluateOnNewDocument(() => {
+                window.chrome = {
+                    runtime: {}
+                };
+            });
+
+            // Override permissions
+            await this.page.evaluateOnNewDocument(() => {
+                const originalQuery = window.navigator.permissions.query;
+                return window.navigator.permissions.query = (parameters) => (
+                    parameters.name === 'notifications' ?
+                        Promise.resolve({ state: Notification.permission }) :
+                        originalQuery(parameters)
+                );
+            });
+
+            // Randomize canvas fingerprinting
+            await this.page.evaluateOnNewDocument(() => {
+                const getImageData = HTMLCanvasElement.prototype.getContext;
+                HTMLCanvasElement.prototype.getContext = function(type) {
+                    if (type === '2d') {
+                        const ctx = getImageData.call(this, type);
+                        const originalImageData = ctx.getImageData;
+                        ctx.getImageData = function() {
+                            const imageData = originalImageData.apply(this, arguments);
+                            // Add slight noise to canvas fingerprinting
+                            for (let i = 0; i < imageData.data.length; i += 4) {
+                                if (Math.random() < 0.001) {
+                                    imageData.data[i] = Math.floor(Math.random() * 255);
+                                }
+                            }
+                            return imageData;
+                        };
+                        return ctx;
+                    }
+                    return getImageData.call(this, type);
+                };
+            });
+
+            this.logger.debug('✅ Anti-detection measures applied');
+
+        } catch (error) {
+            this.logger.debug('⚠️ Some anti-detection measures failed:', error.message);
+        }
+    }
+
+    /**
+     * Check if session rotation is needed
+     */
+    async checkSessionRotation() {
+        try {
+            if (!this.config.get('SESSION_ROTATION_INTERVAL')) {
+                return false;
+            }
+
+            const sessionAge = Date.now() - this.sessionStats.startTime.getTime();
+            const rotationInterval = this.config.get('SESSION_ROTATION_INTERVAL');
+
+            if (sessionAge > rotationInterval) {
+                this.logger.info('🔄 Session rotation required');
+                return true;
+            }
+
+            return false;
+
+        } catch (error) {
+            this.logger.debug('⚠️ Session rotation check failed:', error.message);
+            return false;
+        }
+    }
+
+    /**
+     * Perform session rotation
+     */
+    async performSessionRotation() {
+        try {
+            this.logger.info('🔄 Performing session rotation...');
+
+            // Clear current session data
+            if (this.steamAuth) {
+                this.steamAuth.clearSessionData();
+            }
+
+            // Close current browser
+            if (this.browser) {
+                await this.browser.close();
+            }
+
+            // Wait before creating new session
+            await this.browserUtils.delay(this.browserUtils.randomDelay(10000, 30000));
+
+            // Re-initialize browser with new fingerprint
+            await this.initializeBrowser();
+
+            // Re-initialize Steam auth
+            this.steamAuth = new SteamAuth(this.page, this.logger, this.config);
+
+            // Navigate back to bandit.camp
+            await this.navigateToBanditCamp();
+
+            // Re-authenticate
+            await this.handleAuthentication();
+
+            // Re-initialize features
+            await this.initializeBanditCampFeatures();
+
+            this.logger.info('✅ Session rotation completed');
+
+        } catch (error) {
+            this.logger.error('❌ Session rotation failed:', error.message);
             throw error;
         }
     }
     
     /**
-     * Main bot execution loop
+     * Navigate to bandit.camp/mines specifically
      */
-    async mainLoop() {
-        this.logger.info('🎮 Starting main game loop...');
+    async navigateToBanditCamp() {
+        const siteUrl = this.config.get('SITE_URL');
+        
+        if (!siteUrl.includes('bandit.camp')) {
+            this.logger.warn('⚠️ Site URL is not bandit.camp, updating to https://bandit.camp/mines');
+            this.config.set('SITE_URL', 'https://bandit.camp/mines');
+        }
+        
+        this.logger.info(`🌍 Navigating to bandit.camp/mines...`);
         
         try {
-            // Login if credentials are provided
-            if (this.config.get('USERNAME') && this.config.get('PASSWORD')) {
-                await this.performLogin();
+            await this.page.goto('https://bandit.camp/mines', {
+                waitUntil: 'networkidle2',
+                timeout: 30000
+            });
+            
+            await this.browserUtils.delay(3000);
+            
+            // Take initial screenshot
+            if (this.config.get('TAKE_SCREENSHOT')) {
+                await this.browserUtils.takeScreenshot('bandit-camp-loaded');
             }
             
-            // Wait for game to be available
-            await this.waitForGame();
+            this.logger.info('✅ Successfully navigated to bandit.camp/mines');
+            
+        } catch (error) {
+            this.logger.error('❌ Failed to navigate to bandit.camp:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Handle Steam authentication for bandit.camp
+     */
+    async handleAuthentication() {
+        try {
+            this.logger.info('🔐 Handling authentication for bandit.camp...');
+            
+            // Use Steam authentication handler
+            await this.steamAuth.authenticate();
+            
+            // Wait for page to settle after authentication
+            await this.browserUtils.delay(3000);
+            
+            // Verify we're on the mines game page
+            await this.ensureOnMinesPage();
+            
+            this.logger.info('✅ Authentication completed successfully');
+            
+        } catch (error) {
+            this.logger.error('❌ Authentication failed:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Ensure we're on the mines game page
+     */
+    async ensureOnMinesPage() {
+        try {
+            const currentUrl = this.page.url();
+            
+            if (!currentUrl.includes('/mines')) {
+                this.logger.info('🔄 Navigating to mines game...');
+                await this.page.goto('https://bandit.camp/mines', {
+                    waitUntil: 'networkidle2',
+                    timeout: 15000
+                });
+                await this.browserUtils.delay(2000);
+            }
+            
+            // Wait for mines game interface to load
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            await this.page.waitForSelector(selectors.MINES_GAME_CONTAINER, { timeout: 10000 });
+            
+        } catch (error) {
+            this.logger.error('❌ Failed to ensure mines page:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Initialize bandit.camp specific features
+     */
+    async initializeBanditCampFeatures() {
+        try {
+            this.logger.info('⚙️ Initializing bandit.camp features...');
+            
+            // Get current balance
+            await this.updateBalance();
+            this.sessionStats.startBalance = this.sessionStats.currentBalance;
+            
+            // Initialize betting strategy
+            await this.initializeBettingStrategy();
+            
+            // Check if smart cheating should be enabled
+            this.evaluateSmartCheating();
+            
+            this.logger.info('✅ Bandit.camp features initialized');
+            
+        } catch (error) {
+            this.logger.error('❌ Failed to initialize bandit.camp features:', error.message);
+            // Continue execution even if some features fail to initialize
+        }
+    }
+
+    /**
+     * Update current balance from bandit.camp
+     */
+    async updateBalance() {
+        try {
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            const balanceElement = await this.page.$(selectors.BALANCE_DISPLAY);
+            
+            if (balanceElement) {
+                const balanceText = await this.page.evaluate(el => el.textContent, balanceElement);
+                const balance = parseFloat(balanceText.replace(/[^\d.-]/g, ''));
+                
+                if (!isNaN(balance)) {
+                    this.sessionStats.currentBalance = balance;
+                    this.logger.debug(`💰 Current balance: $${balance.toFixed(2)}`);
+                }
+            }
+        } catch (error) {
+            this.logger.debug('⚠️ Could not update balance:', error.message);
+        }
+    }
+
+    /**
+     * Initialize betting strategy
+     */
+    async initializeBettingStrategy() {
+        try {
+            this.logger.debug(`🎯 Initializing ${this.bettingStrategy} betting strategy`);
+            
+            // Set initial bet amount based on strategy and balance
+            const balance = this.sessionStats.currentBalance;
+            const protectionThreshold = this.config.get('BALANCE_PROTECTION_THRESHOLD');
+            
+            if (balance > 0) {
+                const maxSafeBet = balance * protectionThreshold;
+                this.currentBetAmount = Math.min(
+                    this.config.get('INITIAL_BET_AMOUNT'),
+                    maxSafeBet,
+                    this.config.get('MAX_BET_AMOUNT')
+                );
+            }
+            
+            this.logger.debug(`💵 Initial bet amount: $${this.currentBetAmount.toFixed(2)}`);
+            
+        } catch (error) {
+            this.logger.error('❌ Failed to initialize betting strategy:', error.message);
+        }
+    }
+
+    /**
+     * Evaluate if smart cheating should be enabled
+     */
+    evaluateSmartCheating() {
+        const winRate = this.calculateWinRate();
+        const threshold = this.config.get('WIN_RATE_THRESHOLD');
+        const enableCheating = this.config.get('ENABLE_SMART_CHEATING');
+        
+        if (enableCheating && winRate < threshold) {
+            this.smartCheatingEnabled = true;
+            this.logger.info(`🎲 Smart cheating enabled (win rate: ${(winRate * 100).toFixed(1)}% < ${(threshold * 100).toFixed(1)}%)`);
+        } else {
+            this.smartCheatingEnabled = false;
+        }
+    }
+
+    /**
+     * Calculate current win rate
+     */
+    calculateWinRate() {
+        if (this.sessionStats.gamesPlayed === 0) return 1.0;
+        return this.sessionStats.wins / this.sessionStats.gamesPlayed;
+    }
+    
+    /**
+     * Main bot execution loop for bandit.camp
+     */
+    async mainLoop() {
+        this.logger.info('🎮 Starting bandit.camp mines game loop...');
+        
+        try {
+            // Wait for game interface to be ready
+            await this.waitForGameInterface();
             
             // Main game loop
             while (this.isRunning && this.sessionStats.gamesPlayed < this.config.get('MAX_GAMES')) {
                 try {
-                    await this.playGame();
-                    
-                    // Delay between games
-                    const delay = this.browserUtils.randomDelay(
-                        this.config.get('DELAY_MIN'),
-                        this.config.get('DELAY_MAX')
-                    );
-                    
-                    this.logger.info(`⏳ Waiting ${delay}ms before next game...`);
-                    await this.browserUtils.delay(delay);
-                    
-                } catch (gameError) {
-                    this.logger.error('🎮 Game error:', gameError.message);
-                    
-                    // Take error screenshot
-                    if (this.config.get('TAKE_SCREENSHOT')) {
-                        await this.browserUtils.takeScreenshot('game-error');
+                    // Check if session rotation is needed
+                    if (await this.checkSessionRotation()) {
+                        await this.performSessionRotation();
+                        continue; // Restart loop after rotation
                     }
                     
-                    // Check if we should stop on errors
-                    if (this.shouldStopOnError(gameError)) {
-                        this.logger.warn('🛑 Stopping due to error conditions');
+                    // Update balance before each game
+                    await this.updateBalance();
+                    
+                    // Check balance protection
+                    if (this.shouldStopForBalanceProtection()) {
+                        this.logger.warn('🛡️ Stopping due to balance protection');
                         break;
                     }
                     
-                    // Recovery delay
-                    await this.browserUtils.delay(5000);
+                    // Adjust betting strategy based on performance
+                    await this.adjustBettingStrategy();
+                    
+                    // Play a game
+                    await this.playBanditCampGame();
+                    
+                    // Update statistics
+                    this.evaluateSmartCheating();
+                    
+                    // Delay between games with anti-detection
+                    await this.humanLikeDelay();
+                    
+                } catch (gameError) {
+                    const continueLoop = await this.handleGameError(gameError);
+                    if (!continueLoop) {
+                        break;
+                    }
+                }
+                
+                // Periodic health check
+                if (this.sessionStats.gamesPlayed % 10 === 0) {
+                    const healthOk = await this.performHealthCheck();
+                    if (!healthOk) {
+                        this.logger.warn('🏥 Health check failed - attempting recovery');
+                        const recovered = await this.attemptErrorRecovery(new Error('Health check failed'));
+                        if (!recovered) {
+                            this.logger.error('🚨 Unable to recover from health check failure');
+                            break;
+                        }
+                    }
                 }
             }
             
@@ -186,89 +562,477 @@ class MiningBot {
     }
     
     /**
-     * Perform login if credentials are available
+     * Wait for bandit.camp game interface to be ready
      */
-    async performLogin() {
-        this.logger.info('🔐 Attempting to log in...');
-        
+    async waitForGameInterface() {
         try {
-            // Common login selectors (customize based on actual site)
-            const loginSelectors = [
-                'input[type="email"]',
-                'input[name="username"]',
-                'input[name="email"]',
-                '#email',
-                '#username'
-            ];
+            this.logger.debug('⏳ Waiting for bandit.camp game interface...');
             
-            const passwordSelectors = [
-                'input[type="password"]',
-                'input[name="password"]',
-                '#password'
-            ];
+            const selectors = this.config.get('BANDIT_SELECTORS');
             
-            const submitSelectors = [
-                'button[type="submit"]',
-                'input[type="submit"]',
-                '.login-button',
-                '#login-button'
-            ];
+            // Wait for main game elements
+            await this.page.waitForSelector(selectors.MINES_GAME_CONTAINER, { timeout: 15000 });
+            await this.page.waitForSelector(selectors.BET_INPUT, { timeout: 15000 });
+            await this.page.waitForSelector(selectors.MINES_COUNT_INPUT, { timeout: 15000 });
             
-            // Find and fill username/email
-            let usernameField = null;
-            for (const selector of loginSelectors) {
-                if (await this.browserUtils.elementExists(selector)) {
-                    usernameField = selector;
-                    break;
-                }
-            }
-            
-            if (!usernameField) {
-                throw new Error('Username field not found');
-            }
-            
-            await this.browserUtils.humanType(usernameField, this.config.get('USERNAME'));
-            this.logger.debug('✅ Username entered');
-            
-            // Find and fill password
-            let passwordField = null;
-            for (const selector of passwordSelectors) {
-                if (await this.browserUtils.elementExists(selector)) {
-                    passwordField = selector;
-                    break;
-                }
-            }
-            
-            if (!passwordField) {
-                throw new Error('Password field not found');
-            }
-            
-            await this.browserUtils.humanType(passwordField, this.config.get('PASSWORD'));
-            this.logger.debug('✅ Password entered');
-            
-            // Find and click submit button
-            let submitButton = null;
-            for (const selector of submitSelectors) {
-                if (await this.browserUtils.elementExists(selector)) {
-                    submitButton = selector;
-                    break;
-                }
-            }
-            
-            if (!submitButton) {
-                throw new Error('Submit button not found');
-            }
-            
-            await this.browserUtils.safeClick(submitButton);
-            this.logger.debug('✅ Login form submitted');
-            
-            // Wait for login to complete
-            await this.browserUtils.delay(3000);
-            
-            this.logger.info('✅ Login completed successfully');
+            this.logger.debug('✅ Game interface is ready');
             
         } catch (error) {
-            this.logger.error('❌ Login failed:', error.message);
+            this.logger.error('❌ Game interface not ready:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Check if should stop for balance protection
+     */
+    shouldStopForBalanceProtection() {
+        const currentBalance = this.sessionStats.currentBalance;
+        const startBalance = this.sessionStats.startBalance;
+        const threshold = this.config.get('BALANCE_PROTECTION_THRESHOLD');
+        
+        if (startBalance > 0 && currentBalance < startBalance * threshold) {
+            this.logger.warn(`💸 Balance protection triggered: $${currentBalance.toFixed(2)} < $${(startBalance * threshold).toFixed(2)}`);
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Adjust betting strategy based on performance
+     */
+    async adjustBettingStrategy() {
+        try {
+            const winRate = this.calculateWinRate();
+            const streak = this.sessionStats.streak;
+            const consecutiveLosses = this.sessionStats.consecutiveLosses;
+            
+            switch (this.bettingStrategy) {
+                case 'conservative':
+                    await this.applyConservativeStrategy(winRate, streak);
+                    break;
+                case 'aggressive':
+                    await this.applyAggressiveStrategy(winRate, streak);
+                    break;
+                case 'adaptive':
+                    await this.applyAdaptiveStrategy(winRate, streak, consecutiveLosses);
+                    break;
+                case 'balanced':
+                    await this.applyBalancedStrategy(winRate, streak);
+                    break;
+            }
+            
+            // Ensure bet amount is within limits
+            this.currentBetAmount = Math.max(
+                this.config.get('MIN_BET_AMOUNT'),
+                Math.min(this.currentBetAmount, this.config.get('MAX_BET_AMOUNT'))
+            );
+            
+        } catch (error) {
+            this.logger.debug('⚠️ Error adjusting betting strategy:', error.message);
+        }
+    }
+
+    /**
+     * Apply conservative betting strategy
+     */
+    async applyConservativeStrategy(winRate, streak) {
+        if (streak > 0) {
+            // Increase bet slightly on winning streak
+            this.currentBetAmount *= this.config.get('CONSERVATIVE_MULTIPLIER');
+        } else if (this.sessionStats.consecutiveLosses > 2) {
+            // Decrease bet on losing streak
+            this.currentBetAmount *= 0.8;
+        }
+    }
+
+    /**
+     * Apply aggressive betting strategy
+     */
+    async applyAggressiveStrategy(winRate, streak) {
+        if (streak > 0) {
+            // Increase bet aggressively on winning
+            this.currentBetAmount *= this.config.get('AGGRESSIVE_MULTIPLIER');
+        } else if (this.sessionStats.consecutiveLosses > 1) {
+            // Martingale-like approach
+            this.currentBetAmount *= 2.0;
+        }
+    }
+
+    /**
+     * Apply adaptive betting strategy
+     */
+    async applyAdaptiveStrategy(winRate, streak, consecutiveLosses) {
+        if (winRate > 0.6) {
+            // High win rate, be more aggressive
+            this.currentBetAmount *= 1.8;
+        } else if (winRate < 0.4) {
+            // Low win rate, be conservative
+            this.currentBetAmount *= 0.7;
+        } else if (consecutiveLosses >= this.config.get('MAX_CONSECUTIVE_LOSSES')) {
+            // Too many losses, reduce bet significantly
+            this.currentBetAmount *= 0.5;
+        }
+    }
+
+    /**
+     * Apply balanced betting strategy
+     */
+    async applyBalancedStrategy(winRate, streak) {
+        const multiplier = winRate > 0.5 ? 1.3 : 0.9;
+        this.currentBetAmount *= multiplier;
+    }
+
+    /**
+     * Human-like delay with anti-detection
+     */
+    async humanLikeDelay() {
+        let baseDelay = this.browserUtils.randomDelay(
+            this.config.get('DELAY_MIN'),
+            this.config.get('DELAY_MAX')
+        );
+        
+        if (this.config.get('HUMAN_LIKE_DELAYS')) {
+            // Add variance based on recent performance
+            if (this.sessionStats.consecutiveLosses > 3) {
+                baseDelay *= 1.5; // Take longer breaks after losses
+            }
+            
+            // Random additional delays occasionally
+            if (Math.random() < 0.1) {
+                baseDelay += this.browserUtils.randomDelay(5000, 15000);
+            }
+        }
+        
+        this.logger.info(`⏳ Waiting ${baseDelay}ms before next game...`);
+        await this.browserUtils.delay(baseDelay);
+        
+        // Random mouse movements if enabled
+        if (this.config.get('RANDOM_MOUSE_MOVEMENTS')) {
+            await this.performRandomMouseMovements();
+        }
+    }
+
+    /**
+     * Perform random mouse movements for anti-detection
+     */
+    async performRandomMouseMovements() {
+        try {
+            const movements = Math.floor(Math.random() * 3) + 1;
+            
+            for (let i = 0; i < movements; i++) {
+                const x = Math.floor(Math.random() * this.config.get('VIEWPORT_WIDTH'));
+                const y = Math.floor(Math.random() * this.config.get('VIEWPORT_HEIGHT'));
+                
+                await this.page.mouse.move(x, y, {
+                    steps: Math.floor(Math.random() * 10) + 5
+                });
+                
+                await this.browserUtils.delay(this.browserUtils.randomDelay(100, 500));
+            }
+        } catch (error) {
+            this.logger.debug('⚠️ Random mouse movement failed:', error.message);
+        }
+    }
+    
+    /**
+     * Play a single game on bandit.camp mines
+     */
+    async playBanditCampGame() {
+        try {
+            this.logger.info(`🎮 Starting game ${this.sessionStats.gamesPlayed + 1} (Bet: $${this.currentBetAmount.toFixed(2)})`);
+            
+            // Initialize game state
+            this.currentGame = {
+                gameNumber: this.sessionStats.gamesPlayed + 1,
+                startTime: Date.now(),
+                betAmount: this.currentBetAmount,
+                minesCount: this.calculateOptimalMinesCount(),
+                moves: [],
+                result: null,
+                profit: 0,
+                usedSmartCheating: this.smartCheatingEnabled
+            };
+            
+            // Set up the game
+            await this.setupBanditCampGame();
+            
+            // Start the game
+            await this.startBanditCampGame();
+            
+            // Play the game with AI or cheating
+            const gameResult = await this.playGameWithStrategy();
+            
+            // Handle game completion
+            await this.handleGameCompletion(gameResult);
+            
+            // Update session statistics
+            this.updateSessionStats(gameResult);
+            
+            this.logger.info(`🏁 Game ${this.currentGame.gameNumber} completed: ${gameResult.won ? '🎉 WIN' : '💥 LOSS'} (Profit: $${gameResult.profit.toFixed(2)})`);
+            
+        } catch (error) {
+            this.logger.error('❌ Game play failed:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Calculate optimal mines count based on strategy
+     */
+    calculateOptimalMinesCount() {
+        const minMines = this.config.get('MIN_MINES');
+        const maxMines = this.config.get('MAX_MINES');
+        
+        // Adjust mines count based on current strategy and performance
+        let minesCount = minMines;
+        
+        if (this.smartCheatingEnabled) {
+            // Use fewer mines when cheating for higher success rate
+            minesCount = Math.max(minMines, Math.floor(maxMines * 0.3));
+        } else {
+            const winRate = this.calculateWinRate();
+            
+            if (winRate > 0.7) {
+                // High win rate, can take more risk
+                minesCount = Math.floor(maxMines * 0.6);
+            } else if (winRate > 0.5) {
+                // Moderate win rate
+                minesCount = Math.floor(maxMines * 0.4);
+            } else {
+                // Low win rate, be conservative
+                minesCount = Math.floor(maxMines * 0.2);
+            }
+        }
+        
+        return Math.max(minMines, Math.min(minesCount, maxMines));
+    }
+
+    /**
+     * Set up bandit.camp game parameters
+     */
+    async setupBanditCampGame() {
+        try {
+            this.logger.debug('⚙️ Setting up bandit.camp game...');
+            
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            
+            // Set bet amount
+            await this.setBetAmount(this.currentBetAmount);
+            
+            // Set mines count
+            await this.setMinesCount(this.currentGame.minesCount);
+            
+            // Wait for setup to complete
+            await this.browserUtils.delay(1000);
+            
+            this.logger.debug(`✅ Game setup: Bet $${this.currentBetAmount.toFixed(2)}, Mines: ${this.currentGame.minesCount}`);
+            
+        } catch (error) {
+            this.logger.error('❌ Game setup failed:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Set bet amount on bandit.camp
+     */
+    async setBetAmount(amount) {
+        try {
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            const betInput = await this.page.$(selectors.BET_INPUT);
+            
+            if (betInput) {
+                await betInput.click({ clickCount: 3 }); // Select all text
+                await betInput.type(amount.toFixed(2), { delay: 100 });
+                await this.browserUtils.delay(500);
+            } else {
+                throw new Error('Bet input not found');
+            }
+        } catch (error) {
+            this.logger.error('❌ Failed to set bet amount:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Set mines count on bandit.camp
+     */
+    async setMinesCount(count) {
+        try {
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            const minesInput = await this.page.$(selectors.MINES_COUNT_INPUT);
+            
+            if (minesInput) {
+                await minesInput.click({ clickCount: 3 }); // Select all text
+                await minesInput.type(count.toString(), { delay: 100 });
+                await this.browserUtils.delay(500);
+            } else {
+                throw new Error('Mines count input not found');
+            }
+        } catch (error) {
+            this.logger.error('❌ Failed to set mines count:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Start bandit.camp game
+     */
+    async startBanditCampGame() {
+        try {
+            this.logger.debug('🚀 Starting bandit.camp game...');
+            
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            const startButton = await this.page.$(selectors.START_GAME_BUTTON);
+            
+            if (startButton) {
+                await startButton.click();
+                await this.browserUtils.delay(2000);
+                
+                // Wait for game grid to be active
+                await this.page.waitForSelector(selectors.GAME_ACTIVE, { timeout: 10000 });
+                
+                this.logger.debug('✅ Game started successfully');
+            } else {
+                throw new Error('Start game button not found');
+            }
+        } catch (error) {
+            this.logger.error('❌ Failed to start game:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Play game with selected strategy (AI or cheating)
+     */
+    async playGameWithStrategy() {
+        try {
+            if (this.smartCheatingEnabled) {
+                this.logger.debug('🎲 Playing with smart cheating enabled');
+                return await this.playWithSmartCheating();
+            } else {
+                this.logger.debug('🧠 Playing with AI strategy');
+                return await this.playWithAIStrategy();
+            }
+        } catch (error) {
+            this.logger.error('❌ Strategy play failed:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Play with smart cheating mechanisms
+     */
+    async playWithSmartCheating() {
+        try {
+            this.logger.debug('🎯 Implementing smart cheating strategy...');
+            
+            // Get game state with enhanced detection
+            const gameState = await this.detectBanditCampGameState();
+            
+            if (!gameState) {
+                throw new Error('Could not detect game state');
+            }
+            
+            const confidenceLevel = this.config.get('CHEATING_CONFIDENCE_LEVEL');
+            let safeMoves = 0;
+            const targetSafeMoves = Math.max(3, Math.floor(Math.random() * 6) + 2); // 3-7 safe moves
+            
+            while (safeMoves < targetSafeMoves && gameState.gameStatus === 'playing') {
+                // Use enhanced AI with cheating algorithms
+                const bestMove = await this.gameAnalyzer.findSafestMoveWithCheating(gameState, confidenceLevel);
+                
+                if (!bestMove) {
+                    this.logger.debug('🛑 No safe moves found, cashing out');
+                    break;
+                }
+                
+                // Execute the move
+                await this.executeBanditCampMove(bestMove);
+                
+                // Wait and update game state
+                await this.browserUtils.delay(this.browserUtils.randomDelay(1000, 2000));
+                
+                // Check if game is still active
+                const updatedState = await this.detectBanditCampGameState();
+                if (updatedState.gameStatus !== 'playing') {
+                    break;
+                }
+                
+                safeMoves++;
+                
+                // Random chance to cash out early with profit
+                if (safeMoves >= 3 && Math.random() < 0.3) {
+                    this.logger.debug('💰 Cashing out early with profit');
+                    break;
+                }
+            }
+            
+            // Cash out if still playing
+            if (gameState.gameStatus === 'playing') {
+                await this.cashOutGame();
+            }
+            
+            // Get final game result
+            return await this.getFinalGameResult();
+            
+        } catch (error) {
+            this.logger.error('❌ Smart cheating failed:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Play with AI strategy (no cheating)
+     */
+    async playWithAIStrategy() {
+        try {
+            this.logger.debug('🤖 Playing with advanced AI strategy...');
+            
+            let gameState = await this.detectBanditCampGameState();
+            let moveCount = 0;
+            const maxMoves = 8; // Conservative play
+            
+            while (gameState && gameState.gameStatus === 'playing' && moveCount < maxMoves) {
+                // Use game analyzer to find best move
+                const bestMove = await this.gameAnalyzer.analyzeGameState(gameState);
+                
+                if (!bestMove || bestMove.safetyScore < 0.6) {
+                    this.logger.debug('🛑 Safety threshold not met, cashing out');
+                    break;
+                }
+                
+                // Execute the move
+                await this.executeBanditCampMove(bestMove);
+                
+                // Wait and update game state
+                await this.browserUtils.delay(this.browserUtils.randomDelay(1500, 2500));
+                
+                // Update game state
+                gameState = await this.detectBanditCampGameState();
+                moveCount++;
+                
+                // Auto cash out based on multiplier
+                const currentMultiplier = await this.getCurrentMultiplier();
+                const targetMultiplier = this.config.get('CASHOUT_MULTIPLIER');
+                
+                if (currentMultiplier >= targetMultiplier) {
+                    this.logger.debug(`💰 Target multiplier reached: ${currentMultiplier}x`);
+                    break;
+                }
+            }
+            
+            // Cash out if still playing
+            if (gameState && gameState.gameStatus === 'playing') {
+                await this.cashOutGame();
+            }
+            
+            return await this.getFinalGameResult();
+            
+        } catch (error) {
+            this.logger.error('❌ AI strategy failed:', error.message);
             throw error;
         }
     }
@@ -393,6 +1157,299 @@ class MiningBot {
         } catch (error) {
             this.logger.error(`❌ Error during game ${this.sessionStats.gamesPlayed}:`, error.message);
             throw error;
+        }
+    }
+    
+    /**
+     * Detect bandit.camp specific game state
+     */
+    async detectBanditCampGameState() {
+        try {
+            this.logger.debug('🔍 Detecting bandit.camp game state...');
+            
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            
+            // Detect game status
+            let gameStatus = 'playing';
+            
+            if (await this.browserUtils.elementExists(selectors.GAME_WON)) {
+                gameStatus = 'won';
+            } else if (await this.browserUtils.elementExists(selectors.GAME_LOST)) {
+                gameStatus = 'lost';
+            } else if (!await this.browserUtils.elementExists(selectors.GAME_ACTIVE)) {
+                gameStatus = 'inactive';
+            }
+            
+            // Get game grid
+            const grid = await this.parseBanditCampGrid();
+            
+            return {
+                grid: grid,
+                gameStatus: gameStatus,
+                mines: this.currentGame ? this.currentGame.minesCount : 5,
+                revealed: grid ? this.countRevealedCells(grid) : 0,
+                multiplier: await this.getCurrentMultiplier()
+            };
+            
+        } catch (error) {
+            this.logger.error('❌ Game state detection failed:', error.message);
+            return null;
+        }
+    }
+
+    /**
+     * Parse bandit.camp mine grid
+     */
+    async parseBanditCampGrid() {
+        try {
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            const cells = await this.page.$$(selectors.MINE_CELL);
+            
+            if (cells.length === 0) {
+                return null;
+            }
+            
+            // Determine grid size (common sizes: 5x5 = 25 cells)
+            const totalCells = cells.length;
+            const gridSize = Math.sqrt(totalCells);
+            
+            if (gridSize % 1 !== 0) {
+                this.logger.warn(`Unexpected grid size: ${totalCells} cells`);
+                return null;
+            }
+            
+            const grid = [];
+            
+            for (let i = 0; i < cells.length; i++) {
+                const row = Math.floor(i / gridSize);
+                const col = i % gridSize;
+                
+                if (!grid[row]) {
+                    grid[row] = [];
+                }
+                
+                // Analyze cell state
+                const cellData = await this.page.evaluate(el => ({
+                    isRevealed: el.classList.contains('revealed') || el.classList.contains('opened') || el.classList.contains('safe'),
+                    isMine: el.classList.contains('mine') || el.classList.contains('bomb'),
+                    isSafe: el.classList.contains('safe') || el.classList.contains('gem'),
+                    isClickable: !el.classList.contains('disabled') && !el.classList.contains('revealed'),
+                    text: el.textContent.trim(),
+                    className: el.className
+                }), cells[i]);
+                
+                grid[row][col] = {
+                    x: col,
+                    y: row,
+                    isRevealed: cellData.isRevealed,
+                    isMine: cellData.isMine,
+                    isSafe: cellData.isSafe,
+                    isClickable: cellData.isClickable,
+                    element: cells[i]
+                };
+            }
+            
+            return grid;
+            
+        } catch (error) {
+            this.logger.error('❌ Grid parsing failed:', error.message);
+            return null;
+        }
+    }
+
+    /**
+     * Execute move on bandit.camp
+     */
+    async executeBanditCampMove(move) {
+        try {
+            this.logger.debug(`🎯 Executing move: (${move.x}, ${move.y})`);
+            
+            const grid = await this.parseBanditCampGrid();
+            if (!grid || !grid[move.y] || !grid[move.y][move.x]) {
+                throw new Error('Invalid move coordinates');
+            }
+            
+            const cell = grid[move.y][move.x];
+            
+            if (!cell.isClickable) {
+                throw new Error('Cell is not clickable');
+            }
+            
+            // Click the cell
+            if (cell.element) {
+                await cell.element.click();
+                
+                // Record the move
+                this.currentGame.moves.push({
+                    ...move,
+                    timestamp: Date.now()
+                });
+                
+                this.logger.debug(`✅ Move executed: (${move.x}, ${move.y})`);
+            } else {
+                throw new Error('Cell element not found');
+            }
+            
+        } catch (error) {
+            this.logger.error('❌ Failed to execute bandit.camp move:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Get current multiplier from bandit.camp
+     */
+    async getCurrentMultiplier() {
+        try {
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            const multiplierElement = await this.page.$(selectors.MULTIPLIER_DISPLAY);
+            
+            if (multiplierElement) {
+                const multiplierText = await this.page.evaluate(el => el.textContent, multiplierElement);
+                const multiplier = parseFloat(multiplierText.replace(/[^\d.-]/g, ''));
+                
+                if (!isNaN(multiplier)) {
+                    return multiplier;
+                }
+            }
+            
+            return 1.0; // Default multiplier
+            
+        } catch (error) {
+            this.logger.debug('⚠️ Could not get multiplier:', error.message);
+            return 1.0;
+        }
+    }
+
+    /**
+     * Cash out current game
+     */
+    async cashOutGame() {
+        try {
+            this.logger.debug('💰 Cashing out game...');
+            
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            const cashoutButton = await this.page.$(selectors.CASHOUT_BUTTON);
+            
+            if (cashoutButton) {
+                await cashoutButton.click();
+                await this.browserUtils.delay(2000);
+                this.logger.debug('✅ Cash out successful');
+            } else {
+                this.logger.warn('⚠️ Cash out button not found');
+            }
+            
+        } catch (error) {
+            this.logger.error('❌ Cash out failed:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Get final game result from bandit.camp
+     */
+    async getFinalGameResult() {
+        try {
+            await this.browserUtils.delay(3000); // Wait for results to settle
+            
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            
+            // Determine if game was won or lost
+            const won = await this.browserUtils.elementExists(selectors.GAME_WON);
+            const lost = await this.browserUtils.elementExists(selectors.GAME_LOST);
+            
+            // Calculate profit/loss
+            const finalMultiplier = await this.getCurrentMultiplier();
+            const profit = won ? (this.currentBetAmount * finalMultiplier) - this.currentBetAmount : -this.currentBetAmount;
+            
+            const result = {
+                won: won,
+                lost: lost,
+                profit: profit,
+                multiplier: finalMultiplier,
+                betAmount: this.currentBetAmount,
+                moves: this.currentGame.moves.length,
+                duration: Date.now() - this.currentGame.startTime
+            };
+            
+            return result;
+            
+        } catch (error) {
+            this.logger.error('❌ Failed to get game result:', error.message);
+            return {
+                won: false,
+                lost: true,
+                profit: -this.currentBetAmount,
+                multiplier: 0,
+                betAmount: this.currentBetAmount,
+                moves: 0,
+                duration: 0
+            };
+        }
+    }
+
+    /**
+     * Handle game completion
+     */
+    async handleGameCompletion(gameResult) {
+        try {
+            // Update balance
+            await this.updateBalance();
+            
+            // Update profit tracking
+            this.sessionStats.totalProfit += gameResult.profit;
+            
+            // Take screenshot if configured
+            if (this.config.get('TAKE_SCREENSHOT')) {
+                const screenshotName = `game-${this.currentGame.gameNumber}-${gameResult.won ? 'win' : 'loss'}`;
+                await this.browserUtils.takeScreenshot(screenshotName);
+            }
+            
+            // Store game in history
+            this.gameHistory.push({
+                ...this.currentGame,
+                result: gameResult
+            });
+            
+            // Update betting amount based on result
+            await this.updateBettingAmountBasedOnResult(gameResult);
+            
+        } catch (error) {
+            this.logger.error('❌ Error handling game completion:', error.message);
+        }
+    }
+
+    /**
+     * Update betting amount based on game result
+     */
+    async updateBettingAmountBasedOnResult(gameResult) {
+        try {
+            if (gameResult.won) {
+                // Reset consecutive losses
+                this.sessionStats.consecutiveLosses = 0;
+                
+                // Increase bet slightly on win
+                this.currentBetAmount *= this.config.get('BET_MULTIPLIER');
+            } else {
+                // Increment consecutive losses
+                this.sessionStats.consecutiveLosses++;
+                
+                // Adjust bet based on consecutive losses
+                if (this.sessionStats.consecutiveLosses >= this.config.get('MAX_CONSECUTIVE_LOSSES')) {
+                    // Reset to initial bet after too many losses
+                    this.currentBetAmount = this.config.get('INITIAL_BET_AMOUNT');
+                    this.logger.info('🔄 Reset bet amount due to consecutive losses');
+                }
+            }
+            
+            // Ensure bet is within bounds
+            this.currentBetAmount = Math.max(
+                this.config.get('MIN_BET_AMOUNT'),
+                Math.min(this.currentBetAmount, this.config.get('MAX_BET_AMOUNT'))
+            );
+            
+        } catch (error) {
+            this.logger.debug('⚠️ Error updating betting amount:', error.message);
         }
     }
     
@@ -583,20 +1640,47 @@ class MiningBot {
      * Update session statistics
      */
     updateSessionStats(gameResult) {
+        this.sessionStats.gamesPlayed++;
+        
         if (gameResult.won) {
             this.sessionStats.wins++;
             this.sessionStats.streak++;
             this.sessionStats.bestStreak = Math.max(this.sessionStats.bestStreak, this.sessionStats.streak);
+            this.sessionStats.consecutiveLosses = 0;
         } else {
             this.sessionStats.losses++;
             this.sessionStats.streak = 0;
+            this.sessionStats.consecutiveLosses++;
         }
+        
+        // Update win rate
+        this.sessionStats.winRate = this.sessionStats.gamesPlayed > 0 ? 
+            this.sessionStats.wins / this.sessionStats.gamesPlayed : 0;
+        
+        // Update total profit
+        this.sessionStats.totalProfit += gameResult.profit || 0;
     }
     
     /**
      * Check if bot should stop due to error conditions
      */
     shouldStopOnError(error) {
+        // Stop on critical errors
+        const criticalErrors = [
+            'Authentication failed',
+            'Steam login failed',
+            'Network connection lost',
+            'Page crashed',
+            'Browser closed unexpectedly'
+        ];
+        
+        const errorMessage = error.message.toLowerCase();
+        if (criticalErrors.some(critical => errorMessage.includes(critical.toLowerCase()))) {
+            this.logger.error(`🚨 Critical error detected: ${error.message}`);
+            return true;
+        }
+        
+        // Original loss streak logic
         if (this.config.get('STOP_ON_LOSS') && this.sessionStats.streak === 0) {
             const lossStreak = this.sessionStats.gamesPlayed - this.sessionStats.wins;
             if (lossStreak >= this.config.get('MAX_LOSS_STREAK')) {
@@ -604,7 +1688,151 @@ class MiningBot {
             }
         }
         
+        // Stop if too many consecutive losses with cheating enabled
+        if (this.smartCheatingEnabled && this.sessionStats.consecutiveLosses >= this.config.get('MAX_CONSECUTIVE_LOSSES') * 2) {
+            this.logger.warn('🎲 Too many losses even with cheating enabled');
+            return true;
+        }
+        
         return false;
+    }
+
+    /**
+     * Attempt to recover from errors
+     */
+    async attemptErrorRecovery(error) {
+        try {
+            this.logger.info('🔧 Attempting error recovery...');
+            
+            const errorMessage = error.message.toLowerCase();
+            
+            // Handle different types of errors
+            if (errorMessage.includes('navigation') || errorMessage.includes('timeout')) {
+                this.logger.debug('🔄 Navigation error - refreshing page');
+                await this.page.reload({ waitUntil: 'networkidle2', timeout: 30000 });
+                await this.browserUtils.delay(3000);
+                await this.ensureOnMinesPage();
+                return true;
+            }
+            
+            if (errorMessage.includes('element') || errorMessage.includes('selector')) {
+                this.logger.debug('🔄 Element not found - waiting and retrying');
+                await this.browserUtils.delay(5000);
+                await this.waitForGameInterface();
+                return true;
+            }
+            
+            if (errorMessage.includes('session') || errorMessage.includes('authentication')) {
+                this.logger.debug('🔄 Session error - re-authenticating');
+                await this.handleAuthentication();
+                return true;
+            }
+            
+            if (errorMessage.includes('balance') || errorMessage.includes('insufficient')) {
+                this.logger.debug('🔄 Balance error - updating balance and adjusting bet');
+                await this.updateBalance();
+                this.currentBetAmount = Math.max(
+                    this.config.get('MIN_BET_AMOUNT'),
+                    this.sessionStats.currentBalance * 0.01 // 1% of balance
+                );
+                return true;
+            }
+            
+            // Generic recovery - refresh and try again
+            this.logger.debug('🔄 Generic recovery - refreshing page');
+            await this.page.reload({ waitUntil: 'networkidle2', timeout: 30000 });
+            await this.browserUtils.delay(3000);
+            return true;
+            
+        } catch (recoveryError) {
+            this.logger.error('❌ Error recovery failed:', recoveryError.message);
+            return false;
+        }
+    }
+
+    /**
+     * Enhanced error handling with automatic recovery
+     */
+    async handleGameError(gameError) {
+        this.logger.error('🎮 Game error:', gameError.message);
+        
+        // Take error screenshot
+        if (this.config.get('TAKE_SCREENSHOT')) {
+            try {
+                await this.browserUtils.takeScreenshot('game-error');
+            } catch (screenshotError) {
+                this.logger.debug('⚠️ Failed to take error screenshot');
+            }
+        }
+        
+        // Attempt recovery
+        const recoverySuccessful = await this.attemptErrorRecovery(gameError);
+        
+        if (!recoverySuccessful) {
+            this.logger.warn('🔧 Recovery failed - counting as game loss');
+            
+            // Count as a loss for statistics
+            this.sessionStats.gamesPlayed++;
+            this.sessionStats.losses++;
+            this.sessionStats.consecutiveLosses++;
+            this.sessionStats.streak = 0;
+            
+            // Update win rate
+            this.sessionStats.winRate = this.sessionStats.wins / this.sessionStats.gamesPlayed;
+        }
+        
+        // Check if we should stop
+        if (this.shouldStopOnError(gameError)) {
+            this.logger.warn('🛑 Stopping due to error conditions');
+            return false; // Signal to stop main loop
+        }
+        
+        // Extended recovery delay
+        const recoveryDelay = recoverySuccessful ? 5000 : 15000;
+        await this.browserUtils.delay(recoveryDelay);
+        
+        return true; // Continue main loop
+    }
+
+    /**
+     * Comprehensive health check
+     */
+    async performHealthCheck() {
+        try {
+            this.logger.debug('🏥 Performing health check...');
+            
+            // Check if page is responsive
+            const pageTitle = await this.page.title();
+            if (!pageTitle || pageTitle.includes('error')) {
+                throw new Error('Page appears to be unresponsive or showing error');
+            }
+            
+            // Check if we're still on bandit.camp
+            const currentUrl = this.page.url();
+            if (!currentUrl.includes('bandit.camp')) {
+                throw new Error('Not on bandit.camp anymore');
+            }
+            
+            // Check if game interface is available
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            const gameContainer = await this.page.$(selectors.MINES_GAME_CONTAINER);
+            if (!gameContainer) {
+                throw new Error('Game interface not available');
+            }
+            
+            // Check authentication status
+            const isLoggedIn = await this.steamAuth.checkLoginStatus();
+            if (!isLoggedIn) {
+                throw new Error('User is no longer logged in');
+            }
+            
+            this.logger.debug('✅ Health check passed');
+            return true;
+            
+        } catch (error) {
+            this.logger.warn('🏥 Health check failed:', error.message);
+            return false;
+        }
     }
     
     /**
@@ -615,7 +1843,7 @@ class MiningBot {
         const winRate = this.sessionStats.gamesPlayed > 0 ? 
             (this.sessionStats.wins / this.sessionStats.gamesPlayed * 100).toFixed(1) : 0;
         
-        this.logger.info('\\n📊 SESSION SUMMARY:');
+        this.logger.info('\n📊 BANDIT.CAMP SESSION SUMMARY:');
         this.logger.info(`⏱️  Duration: ${Math.floor(duration / 60000)}m ${Math.floor((duration % 60000) / 1000)}s`);
         this.logger.info(`🎮 Games Played: ${this.sessionStats.gamesPlayed}`);
         this.logger.info(`🏆 Wins: ${this.sessionStats.wins}`);
@@ -623,6 +1851,11 @@ class MiningBot {
         this.logger.info(`📈 Win Rate: ${winRate}%`);
         this.logger.info(`🔥 Best Streak: ${this.sessionStats.bestStreak}`);
         this.logger.info(`⚡ Current Streak: ${this.sessionStats.streak}`);
+        this.logger.info(`💰 Total Profit: $${this.sessionStats.totalProfit.toFixed(2)}`);
+        this.logger.info(`💵 Current Balance: $${this.sessionStats.currentBalance.toFixed(2)}`);
+        this.logger.info(`📉 Consecutive Losses: ${this.sessionStats.consecutiveLosses}`);
+        this.logger.info(`🎲 Smart Cheating: ${this.smartCheatingEnabled ? 'Enabled' : 'Disabled'}`);
+        this.logger.info(`🎯 Strategy: ${this.bettingStrategy}`);
     }
     
     /**

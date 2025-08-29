@@ -107,13 +107,21 @@ class BrowserUtils {
         }
     }
     
-    // Safe click with retry
+    // Safe click with retry and human-like behavior
     async safeClick(selector, retries = 3) {
         for (let i = 0; i < retries; i++) {
             try {
                 await this.page.waitForSelector(selector, { timeout: 5000 });
+                
+                // Add human-like pre-click behavior
+                await this.humanPreClickBehavior(selector);
+                
                 await this.page.click(selector);
                 this.logger.debug(`Clicked: ${selector}`);
+                
+                // Add small post-click delay
+                await this.delay(this.randomDelay(100, 300));
+                
                 return true;
             } catch (error) {
                 this.logger.warn(`Click attempt ${i + 1} failed for ${selector}: ${error.message}`);
@@ -125,18 +133,149 @@ class BrowserUtils {
         }
         return false;
     }
-    
-    // Type text with human-like delay
+
+    // Human-like pre-click behavior
+    async humanPreClickBehavior(selector) {
+        try {
+            // Move mouse to element with human-like path
+            const element = await this.page.$(selector);
+            if (element) {
+                const box = await element.boundingBox();
+                if (box) {
+                    // Move to a random point within the element
+                    const x = box.x + Math.random() * box.width;
+                    const y = box.y + Math.random() * box.height;
+                    
+                    await this.page.mouse.move(x, y, {
+                        steps: Math.floor(Math.random() * 10) + 5
+                    });
+                    
+                    // Small delay before clicking
+                    await this.delay(this.randomDelay(50, 200));
+                }
+            }
+        } catch (error) {
+            // Ignore errors in pre-click behavior
+        }
+    }
+
+    // Enhanced human typing with more realistic patterns
     async humanType(selector, text, delayRange = [50, 150]) {
         await this.page.waitForSelector(selector);
         await this.page.click(selector);
+        
+        // Clear existing text
         await this.page.keyboard.down('Control');
         await this.page.keyboard.press('a');
         await this.page.keyboard.up('Control');
+        await this.delay(this.randomDelay(50, 100));
         
-        for (const char of text) {
+        // Type with human-like patterns
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            
+            // Simulate occasional typos and corrections
+            if (Math.random() < 0.02 && i > 0) { // 2% chance of typo
+                const wrongChar = String.fromCharCode(char.charCodeAt(0) + 1);
+                await this.page.keyboard.type(wrongChar);
+                await this.delay(this.randomDelay(100, 300));
+                await this.page.keyboard.press('Backspace');
+                await this.delay(this.randomDelay(50, 150));
+            }
+            
             await this.page.keyboard.type(char);
-            await this.delay(this.randomDelay(delayRange[0], delayRange[1]));
+            
+            // Variable typing speed with occasional pauses
+            let delay = this.randomDelay(delayRange[0], delayRange[1]);
+            
+            // Longer pause after spaces or punctuation
+            if (char === ' ' || char === '.' || char === ',') {
+                delay *= 1.5;
+            }
+            
+            // Occasional longer pauses (thinking)
+            if (Math.random() < 0.05) {
+                delay *= 3;
+            }
+            
+            await this.delay(delay);
+        }
+    }
+
+    // Enhanced random mouse movement
+    async performRandomMouseMovement() {
+        try {
+            const viewport = await this.page.viewport();
+            const movements = Math.floor(Math.random() * 5) + 1;
+            
+            for (let i = 0; i < movements; i++) {
+                const x = Math.random() * viewport.width;
+                const y = Math.random() * viewport.height;
+                
+                await this.page.mouse.move(x, y, {
+                    steps: Math.floor(Math.random() * 20) + 10
+                });
+                
+                // Occasional clicks on empty areas
+                if (Math.random() < 0.1) {
+                    await this.page.mouse.click(x, y);
+                }
+                
+                await this.delay(this.randomDelay(500, 1500));
+            }
+        } catch (error) {
+            this.logger.debug('⚠️ Random mouse movement failed:', error.message);
+        }
+    }
+
+    // Simulate human scrolling behavior
+    async humanScroll() {
+        try {
+            const scrolls = Math.floor(Math.random() * 3) + 1;
+            
+            for (let i = 0; i < scrolls; i++) {
+                const scrollAmount = (Math.random() - 0.5) * 1000; // Random scroll direction and amount
+                
+                await this.page.evaluate((amount) => {
+                    window.scrollBy(0, amount);
+                }, scrollAmount);
+                
+                await this.delay(this.randomDelay(500, 1000));
+            }
+        } catch (error) {
+            this.logger.debug('⚠️ Human scroll failed:', error.message);
+        }
+    }
+
+    // Simulate reading behavior (pauses)
+    async simulateReading(duration = null) {
+        if (!duration) {
+            duration = this.randomDelay(3000, 8000);
+        }
+        
+        this.logger.debug(`📖 Simulating reading for ${duration}ms`);
+        
+        // Occasional mouse movements during reading
+        const movements = Math.floor(duration / 2000);
+        for (let i = 0; i < movements; i++) {
+            await this.delay(duration / movements);
+            
+            if (Math.random() < 0.3) {
+                await this.performRandomMouseMovement();
+            }
+        }
+    }
+
+    // Anti-bot detection delays
+    async antiDetectionDelay() {
+        const baseDelay = this.randomDelay(1000, 3000);
+        
+        // Longer delays occasionally
+        if (Math.random() < 0.1) {
+            await this.delay(baseDelay * 3);
+            await this.performRandomMouseMovement();
+        } else {
+            await this.delay(baseDelay);
         }
     }
     
