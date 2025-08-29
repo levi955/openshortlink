@@ -74,10 +74,10 @@ class MiningBot {
     }
     
     /**
-     * Initialize Puppeteer browser
+     * Initialize Puppeteer browser with anti-detection features
      */
     async initializeBrowser() {
-        this.logger.info('🌐 Launching browser...');
+        this.logger.info('🌐 Launching browser with anti-detection...');
         
         const launchOptions = {
             headless: this.config.get('HEADLESS'),
@@ -88,7 +88,25 @@ class MiningBot {
                 '--disable-accelerated-2d-canvas',
                 '--no-first-run',
                 '--no-zygote',
-                '--disable-gpu'
+                '--disable-gpu',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor',
+                // Anti-detection arguments
+                '--disable-blink-features=AutomationControlled',
+                '--disable-extensions',
+                '--disable-plugins',
+                '--disable-default-apps',
+                '--disable-component-extensions-with-background-pages',
+                '--no-default-browser-check',
+                '--disable-background-networking',
+                '--disable-background-timer-throttling',
+                '--disable-renderer-backgrounding',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-client-side-phishing-detection',
+                '--disable-sync',
+                '--disable-translate',
+                '--hide-scrollbars',
+                '--mute-audio'
             ]
         };
         
@@ -97,8 +115,16 @@ class MiningBot {
             launchOptions.slowMo = 100;
         }
         
+        // Randomize browser fingerprint if enabled
+        if (this.config.get('BROWSER_FINGERPRINT_ROTATION')) {
+            await this.randomizeBrowserFingerprint(launchOptions);
+        }
+        
         this.browser = await puppeteer.launch(launchOptions);
         this.page = await this.browser.newPage();
+        
+        // Apply anti-detection measures
+        await this.applyAntiDetectionMeasures();
         
         // Set viewport and user agent
         await this.page.setViewport({
@@ -112,6 +138,175 @@ class MiningBot {
         this.browserUtils = new BrowserUtils(this.page, this.logger);
         
         this.logger.info('✅ Browser initialized successfully');
+    }
+
+    /**
+     * Randomize browser fingerprint for anti-detection
+     */
+    async randomizeBrowserFingerprint(launchOptions) {
+        try {
+            // Randomize user agent occasionally
+            const userAgents = [
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+            ];
+            
+            const randomUA = userAgents[Math.floor(Math.random() * userAgents.length)];
+            this.config.set('USER_AGENT', randomUA);
+            
+            // Randomize viewport size slightly
+            const baseWidth = this.config.get('VIEWPORT_WIDTH');
+            const baseHeight = this.config.get('VIEWPORT_HEIGHT');
+            
+            this.config.set('VIEWPORT_WIDTH', baseWidth + Math.floor(Math.random() * 100) - 50);
+            this.config.set('VIEWPORT_HEIGHT', baseHeight + Math.floor(Math.random() * 100) - 50);
+            
+        } catch (error) {
+            this.logger.debug('⚠️ Fingerprint randomization failed:', error.message);
+        }
+    }
+
+    /**
+     * Apply comprehensive anti-detection measures
+     */
+    async applyAntiDetectionMeasures() {
+        try {
+            // Remove webdriver property
+            await this.page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                });
+            });
+
+            // Override the plugins property
+            await this.page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5],
+                });
+            });
+
+            // Override the languages property
+            await this.page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['en-US', 'en'],
+                });
+            });
+
+            // Mock chrome runtime
+            await this.page.evaluateOnNewDocument(() => {
+                window.chrome = {
+                    runtime: {}
+                };
+            });
+
+            // Override permissions
+            await this.page.evaluateOnNewDocument(() => {
+                const originalQuery = window.navigator.permissions.query;
+                return window.navigator.permissions.query = (parameters) => (
+                    parameters.name === 'notifications' ?
+                        Promise.resolve({ state: Notification.permission }) :
+                        originalQuery(parameters)
+                );
+            });
+
+            // Randomize canvas fingerprinting
+            await this.page.evaluateOnNewDocument(() => {
+                const getImageData = HTMLCanvasElement.prototype.getContext;
+                HTMLCanvasElement.prototype.getContext = function(type) {
+                    if (type === '2d') {
+                        const ctx = getImageData.call(this, type);
+                        const originalImageData = ctx.getImageData;
+                        ctx.getImageData = function() {
+                            const imageData = originalImageData.apply(this, arguments);
+                            // Add slight noise to canvas fingerprinting
+                            for (let i = 0; i < imageData.data.length; i += 4) {
+                                if (Math.random() < 0.001) {
+                                    imageData.data[i] = Math.floor(Math.random() * 255);
+                                }
+                            }
+                            return imageData;
+                        };
+                        return ctx;
+                    }
+                    return getImageData.call(this, type);
+                };
+            });
+
+            this.logger.debug('✅ Anti-detection measures applied');
+
+        } catch (error) {
+            this.logger.debug('⚠️ Some anti-detection measures failed:', error.message);
+        }
+    }
+
+    /**
+     * Check if session rotation is needed
+     */
+    async checkSessionRotation() {
+        try {
+            if (!this.config.get('SESSION_ROTATION_INTERVAL')) {
+                return false;
+            }
+
+            const sessionAge = Date.now() - this.sessionStats.startTime.getTime();
+            const rotationInterval = this.config.get('SESSION_ROTATION_INTERVAL');
+
+            if (sessionAge > rotationInterval) {
+                this.logger.info('🔄 Session rotation required');
+                return true;
+            }
+
+            return false;
+
+        } catch (error) {
+            this.logger.debug('⚠️ Session rotation check failed:', error.message);
+            return false;
+        }
+    }
+
+    /**
+     * Perform session rotation
+     */
+    async performSessionRotation() {
+        try {
+            this.logger.info('🔄 Performing session rotation...');
+
+            // Clear current session data
+            if (this.steamAuth) {
+                this.steamAuth.clearSessionData();
+            }
+
+            // Close current browser
+            if (this.browser) {
+                await this.browser.close();
+            }
+
+            // Wait before creating new session
+            await this.browserUtils.delay(this.browserUtils.randomDelay(10000, 30000));
+
+            // Re-initialize browser with new fingerprint
+            await this.initializeBrowser();
+
+            // Re-initialize Steam auth
+            this.steamAuth = new SteamAuth(this.page, this.logger, this.config);
+
+            // Navigate back to bandit.camp
+            await this.navigateToBanditCamp();
+
+            // Re-authenticate
+            await this.handleAuthentication();
+
+            // Re-initialize features
+            await this.initializeBanditCampFeatures();
+
+            this.logger.info('✅ Session rotation completed');
+
+        } catch (error) {
+            this.logger.error('❌ Session rotation failed:', error.message);
+            throw error;
+        }
     }
     
     /**
@@ -309,6 +504,12 @@ class MiningBot {
             // Main game loop
             while (this.isRunning && this.sessionStats.gamesPlayed < this.config.get('MAX_GAMES')) {
                 try {
+                    // Check if session rotation is needed
+                    if (await this.checkSessionRotation()) {
+                        await this.performSessionRotation();
+                        continue; // Restart loop after rotation
+                    }
+                    
                     // Update balance before each game
                     await this.updateBalance();
                     
@@ -331,21 +532,23 @@ class MiningBot {
                     await this.humanLikeDelay();
                     
                 } catch (gameError) {
-                    this.logger.error('🎮 Game error:', gameError.message);
-                    
-                    // Take error screenshot
-                    if (this.config.get('TAKE_SCREENSHOT')) {
-                        await this.browserUtils.takeScreenshot('game-error');
-                    }
-                    
-                    // Check if we should stop on errors
-                    if (this.shouldStopOnError(gameError)) {
-                        this.logger.warn('🛑 Stopping due to error conditions');
+                    const continueLoop = await this.handleGameError(gameError);
+                    if (!continueLoop) {
                         break;
                     }
-                    
-                    // Recovery delay
-                    await this.browserUtils.delay(5000);
+                }
+                
+                // Periodic health check
+                if (this.sessionStats.gamesPlayed % 10 === 0) {
+                    const healthOk = await this.performHealthCheck();
+                    if (!healthOk) {
+                        this.logger.warn('🏥 Health check failed - attempting recovery');
+                        const recovered = await this.attemptErrorRecovery(new Error('Health check failed'));
+                        if (!recovered) {
+                            this.logger.error('🚨 Unable to recover from health check failure');
+                            break;
+                        }
+                    }
                 }
             }
             
@@ -1462,6 +1665,22 @@ class MiningBot {
      * Check if bot should stop due to error conditions
      */
     shouldStopOnError(error) {
+        // Stop on critical errors
+        const criticalErrors = [
+            'Authentication failed',
+            'Steam login failed',
+            'Network connection lost',
+            'Page crashed',
+            'Browser closed unexpectedly'
+        ];
+        
+        const errorMessage = error.message.toLowerCase();
+        if (criticalErrors.some(critical => errorMessage.includes(critical.toLowerCase()))) {
+            this.logger.error(`🚨 Critical error detected: ${error.message}`);
+            return true;
+        }
+        
+        // Original loss streak logic
         if (this.config.get('STOP_ON_LOSS') && this.sessionStats.streak === 0) {
             const lossStreak = this.sessionStats.gamesPlayed - this.sessionStats.wins;
             if (lossStreak >= this.config.get('MAX_LOSS_STREAK')) {
@@ -1469,7 +1688,151 @@ class MiningBot {
             }
         }
         
+        // Stop if too many consecutive losses with cheating enabled
+        if (this.smartCheatingEnabled && this.sessionStats.consecutiveLosses >= this.config.get('MAX_CONSECUTIVE_LOSSES') * 2) {
+            this.logger.warn('🎲 Too many losses even with cheating enabled');
+            return true;
+        }
+        
         return false;
+    }
+
+    /**
+     * Attempt to recover from errors
+     */
+    async attemptErrorRecovery(error) {
+        try {
+            this.logger.info('🔧 Attempting error recovery...');
+            
+            const errorMessage = error.message.toLowerCase();
+            
+            // Handle different types of errors
+            if (errorMessage.includes('navigation') || errorMessage.includes('timeout')) {
+                this.logger.debug('🔄 Navigation error - refreshing page');
+                await this.page.reload({ waitUntil: 'networkidle2', timeout: 30000 });
+                await this.browserUtils.delay(3000);
+                await this.ensureOnMinesPage();
+                return true;
+            }
+            
+            if (errorMessage.includes('element') || errorMessage.includes('selector')) {
+                this.logger.debug('🔄 Element not found - waiting and retrying');
+                await this.browserUtils.delay(5000);
+                await this.waitForGameInterface();
+                return true;
+            }
+            
+            if (errorMessage.includes('session') || errorMessage.includes('authentication')) {
+                this.logger.debug('🔄 Session error - re-authenticating');
+                await this.handleAuthentication();
+                return true;
+            }
+            
+            if (errorMessage.includes('balance') || errorMessage.includes('insufficient')) {
+                this.logger.debug('🔄 Balance error - updating balance and adjusting bet');
+                await this.updateBalance();
+                this.currentBetAmount = Math.max(
+                    this.config.get('MIN_BET_AMOUNT'),
+                    this.sessionStats.currentBalance * 0.01 // 1% of balance
+                );
+                return true;
+            }
+            
+            // Generic recovery - refresh and try again
+            this.logger.debug('🔄 Generic recovery - refreshing page');
+            await this.page.reload({ waitUntil: 'networkidle2', timeout: 30000 });
+            await this.browserUtils.delay(3000);
+            return true;
+            
+        } catch (recoveryError) {
+            this.logger.error('❌ Error recovery failed:', recoveryError.message);
+            return false;
+        }
+    }
+
+    /**
+     * Enhanced error handling with automatic recovery
+     */
+    async handleGameError(gameError) {
+        this.logger.error('🎮 Game error:', gameError.message);
+        
+        // Take error screenshot
+        if (this.config.get('TAKE_SCREENSHOT')) {
+            try {
+                await this.browserUtils.takeScreenshot('game-error');
+            } catch (screenshotError) {
+                this.logger.debug('⚠️ Failed to take error screenshot');
+            }
+        }
+        
+        // Attempt recovery
+        const recoverySuccessful = await this.attemptErrorRecovery(gameError);
+        
+        if (!recoverySuccessful) {
+            this.logger.warn('🔧 Recovery failed - counting as game loss');
+            
+            // Count as a loss for statistics
+            this.sessionStats.gamesPlayed++;
+            this.sessionStats.losses++;
+            this.sessionStats.consecutiveLosses++;
+            this.sessionStats.streak = 0;
+            
+            // Update win rate
+            this.sessionStats.winRate = this.sessionStats.wins / this.sessionStats.gamesPlayed;
+        }
+        
+        // Check if we should stop
+        if (this.shouldStopOnError(gameError)) {
+            this.logger.warn('🛑 Stopping due to error conditions');
+            return false; // Signal to stop main loop
+        }
+        
+        // Extended recovery delay
+        const recoveryDelay = recoverySuccessful ? 5000 : 15000;
+        await this.browserUtils.delay(recoveryDelay);
+        
+        return true; // Continue main loop
+    }
+
+    /**
+     * Comprehensive health check
+     */
+    async performHealthCheck() {
+        try {
+            this.logger.debug('🏥 Performing health check...');
+            
+            // Check if page is responsive
+            const pageTitle = await this.page.title();
+            if (!pageTitle || pageTitle.includes('error')) {
+                throw new Error('Page appears to be unresponsive or showing error');
+            }
+            
+            // Check if we're still on bandit.camp
+            const currentUrl = this.page.url();
+            if (!currentUrl.includes('bandit.camp')) {
+                throw new Error('Not on bandit.camp anymore');
+            }
+            
+            // Check if game interface is available
+            const selectors = this.config.get('BANDIT_SELECTORS');
+            const gameContainer = await this.page.$(selectors.MINES_GAME_CONTAINER);
+            if (!gameContainer) {
+                throw new Error('Game interface not available');
+            }
+            
+            // Check authentication status
+            const isLoggedIn = await this.steamAuth.checkLoginStatus();
+            if (!isLoggedIn) {
+                throw new Error('User is no longer logged in');
+            }
+            
+            this.logger.debug('✅ Health check passed');
+            return true;
+            
+        } catch (error) {
+            this.logger.warn('🏥 Health check failed:', error.message);
+            return false;
+        }
     }
     
     /**
