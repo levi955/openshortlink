@@ -7,15 +7,15 @@
 
 require('dotenv').config();
 const chalk = require('chalk');
-const { MiningBot } = require('./src/bot');
+const { TradingBot } = require('./src/trading-bot');
 const { Config } = require('./src/config');
 const { Logger } = require('./src/utils');
 
 // ASCII Art Banner
 const banner = `
 ╔══════════════════════════════════════════════════════════════╗
-║                    ULTIMATE MINE BOT                        ║
-║                  Advanced Mining Automation                 ║
+║                 NASDAQ 100 FUTURES TRADING BOT             ║
+║              Advanced Intraday Trading Automation          ║
 ╚══════════════════════════════════════════════════════════════╝
 `;
 
@@ -29,11 +29,11 @@ async function main() {
         // Validate configuration
         await config.validate();
         
-        logger.info('🚀 Starting Ultimate Mine Bot...');
+        logger.info('🚀 Starting NASDAQ 100 Futures Trading Bot...');
         logger.info(`📊 Configuration loaded: ${config.getSummary()}`);
         
         // Initialize bot
-        const bot = new MiningBot(config, logger);
+        const bot = new TradingBot(config, logger);
         
         // Setup graceful shutdown
         process.on('SIGINT', async () => {

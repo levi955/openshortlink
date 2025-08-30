@@ -1,52 +1,45 @@
-# Ultimate Mine Bot for Bandit.camp 🤖💎
+# NASDAQ 100 Futures Trading Bot 🤖📈
 
-**Advanced mining bot specifically designed for bandit.camp/mines with Steam authentication, intelligent AI, and advanced cheating mechanisms.**
+**Advanced intraday trading bot for NASDAQ 100 futures with news integration, confluence analysis, and machine learning capabilities.**
 
-## 🌟 Bandit.camp Features
+## 🌟 Key Features
 
-### 🔐 Steam Authentication Integration
-- **Automatic Login Detection**: Detects if user is logged into bandit.camp
-- **Steam OAuth Flow**: Automatically handles Steam login process
-- **Session Management**: Maintains persistent login sessions
-- **Auto-Retry**: Intelligent login retry with Steam Guard support
+### 🎯 NASDAQ 100 Futures Trading
+- **Intraday Trading**: Sophisticated strategies for day trading NASDAQ 100 futures (NQ)
+- **One Trade Per Day**: Risk-managed approach with maximum one trade per trading session
+- **Real-time Market Data**: Live price feeds and technical analysis
+- **Position Sizing**: Intelligent position sizing based on account balance and risk parameters
 
-### 🎯 Bandit.camp Mines Specialization
-- **Native Integration**: Built specifically for bandit.camp/mines interface
-- **Dynamic Betting**: Advanced betting strategies based on balance and performance
-- **Mine Optimization**: Intelligent mine count selection for optimal risk/reward
-- **Real-time Balance Tracking**: Monitors account balance and profit/loss
+### 📰 Forex Factory News Integration
+- **Economic Calendar**: Real-time news feed from Forex Factory
+- **Red Folder Filtering**: Automatically avoids high-impact news events
+- **News Sentiment Analysis**: Analyzes economic data for market sentiment
+- **Trading Safety**: Prevents trading during major economic releases
 
-### 🧠 Advanced AI & Cheating Systems
-- **Smart Cheating**: Activates when win rate drops below threshold
-- **Pattern Recognition**: Advanced algorithms for detecting safe moves
-- **Statistical Analysis**: Learns from game history to improve predictions
-- **Confidence-based Decisions**: Uses probability thresholds for move selection
+### 📊 ES Confluence Analysis
+- **E-mini S&P 500 Correlation**: Uses ES futures for market confluence
+- **Trend Alignment**: Ensures both NQ and ES are aligned before trading
+- **Technical Indicators**: RSI, Moving Averages, and custom algorithms
+- **Multi-timeframe Analysis**: Comprehensive market structure analysis
 
-### 🛡️ Anti-Detection Features
-- **Human-like Behavior**: Randomized delays and mouse movements
-- **Browser Fingerprint Rotation**: Changes browser signatures periodically
-- **Session Rotation**: Automatically rotates sessions to avoid detection
-- **Canvas Fingerprinting Protection**: Randomizes canvas data to prevent tracking
+### 🧠 Machine Learning & Adaptation
+- **Trade Learning**: Analyzes each trade outcome to improve future decisions
+- **Pattern Recognition**: Identifies successful trading patterns over time
+- **Performance Metrics**: Tracks win rate, profit factor, and consecutive streaks
+- **Adaptive Strategies**: Adjusts trading parameters based on historical performance
 
-### 💰 Betting Strategies
-- **Adaptive Strategy**: Adjusts based on win rate and performance
-- **Conservative Mode**: Safe betting with minimal risk
-- **Aggressive Mode**: High-risk, high-reward betting
-- **Balance Protection**: Stops trading when balance drops below threshold
+### 📈 Comprehensive Outcome Reporting
+- **Real-time P&L**: Live profit and loss tracking
+- **Trade Analytics**: Detailed analysis of each trade execution
+- **Learning Insights**: Shows what the bot learned from each trade
+- **Session Summaries**: Daily and weekly performance reports
 
-### 📊 Enhanced Analytics
-- **Real-time Profit Tracking**: Live P&L monitoring
-- **Win Rate Analysis**: Dynamic win rate calculation and strategy adjustment
-- **Consecutive Loss Protection**: Automatic bet reduction after losses
-- **Performance Metrics**: Comprehensive session statistics
-
-## 🚀 Quick Start for Bandit.camp
+## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js 14.0.0 or higher
-- Chrome/Chromium browser (installed automatically with Puppeteer)
-- Steam account with access to bandit.camp
-- Recommended: Steam Guard Mobile Authenticator
+- Trading account with NASDAQ 100 futures access
+- Basic understanding of futures trading
 
 ### Installation
 
@@ -61,191 +54,171 @@
    npm install
    ```
 
-3. **Configure for bandit.camp**
+3. **Configure for trading**
    ```bash
    cp .env.example .env
-   # Edit .env with your Steam credentials and preferences
+   # Edit .env with your trading parameters
    ```
 
    **Required Configuration:**
    ```bash
-   # Steam Authentication (Required)
-   STEAM_USERNAME=your_steam_username
-   STEAM_PASSWORD=your_steam_password
-   STEAM_GUARD_CODE=your_2fa_code  # If using Steam Guard
+   # Account Settings
+   ACCOUNT_BALANCE=100000
+   RISK_PERCENT=1.0
+   MAX_POSITION_SIZE=5
    
-   # Betting Configuration
-   INITIAL_BET_AMOUNT=1.00
-   MIN_BET_AMOUNT=0.10
-   MAX_BET_AMOUNT=100.00
+   # Trading Rules
+   MAX_TRADES_PER_DAY=1
+   STOP_LOSS_PERCENT=0.5
+   TAKE_PROFIT_PERCENT=1.0
+   MIN_SETUP_SCORE=5
    
-   # Strategy Selection
-   BETTING_STRATEGY=adaptive  # Options: conservative, aggressive, adaptive, balanced
-   ENABLE_SMART_CHEATING=true
-   WIN_RATE_THRESHOLD=0.3
+   # News Filtering
+   FILTER_RED_FOLDER_NEWS=true
+   NEWS_IMPACT_THRESHOLD=medium
    ```
 
-4. **Run the bot**
+4. **Run the trading bot**
    ```bash
    npm start
    ```
 
-## ⚙️ Bandit.camp Configuration
+## ⚙️ Trading Configuration
 
 ### Essential Settings
 
 ```bash
-# Bandit.camp Site Configuration
-SITE_URL=https://bandit.camp/mines
-STEAM_USERNAME=your_steam_username
-STEAM_PASSWORD=your_steam_password
-STEAM_GUARD_CODE=your_steam_guard_code
+# Trading Configuration
+TRADING_MODE=futures
+SYMBOL=NQ
+CONFLUENCE_SYMBOL=ES
 
-# Betting Strategy
-BETTING_STRATEGY=adaptive
-INITIAL_BET_AMOUNT=1.00
-MIN_BET_AMOUNT=0.10
-MAX_BET_AMOUNT=100.00
-BET_MULTIPLIER=1.5
-MIN_MINES=3
-MAX_MINES=24
+# Risk Management
+ACCOUNT_BALANCE=100000
+RISK_PERCENT=1.0
+MAX_POSITION_SIZE=5
+STOP_LOSS_PERCENT=0.5
+TAKE_PROFIT_PERCENT=1.0
 
-# Smart Cheating
-ENABLE_SMART_CHEATING=true
-WIN_RATE_THRESHOLD=0.3
-CHEATING_CONFIDENCE_LEVEL=0.85
-MAX_CONSECUTIVE_LOSSES=5
+# Trading Rules
+MAX_TRADES_PER_DAY=1
+MIN_SETUP_SCORE=5
 
-# Safety & Anti-Detection
-BALANCE_PROTECTION_THRESHOLD=0.1
-HUMAN_LIKE_DELAYS=true
-RANDOM_MOUSE_MOVEMENTS=true
-BROWSER_FINGERPRINT_ROTATION=true
-SESSION_ROTATION_INTERVAL=1800000
+# News Integration
+FILTER_RED_FOLDER_NEWS=true
+NEWS_UPDATE_INTERVAL=300000
+
+# Learning System
+ENABLE_LEARNING=true
+PATTERN_LEARNING=true
+MEMORY_SIZE=1000
 ```
 
-### Betting Strategies
+### Trading Hours
 
-- **Conservative**: Low risk, steady growth, small bet increases
-- **Aggressive**: High risk, potential high rewards, martingale-like approach
-- **Adaptive**: Adjusts based on win rate and performance metrics
-- **Balanced**: Moderate risk with balanced profit potential
-
-### Smart Cheating System
-
-The bot automatically enables advanced cheating algorithms when:
-- Win rate drops below configured threshold (default: 30%)
-- Consecutive losses exceed maximum (default: 5 games)
-- Balance protection is triggered
-
-**Cheating Features:**
-- Enhanced pattern recognition with 85%+ confidence
-- Statistical analysis of safe move probabilities
-- Corner and edge cell preference algorithms
-- Advanced neighborhood analysis for mine detection
+The bot automatically operates during market hours:
+- **Regular Hours**: 9:30 AM - 4:00 PM EST
+- **Pre-market**: Optional (configure via environment)
+- **After-hours**: Optional (configure via environment)
 
 ## 🎮 Usage
 
 ### Basic Usage
 
 ```javascript
-const { MiningBot } = require('./src/bot');
+const { TradingBot } = require('./src/trading-bot');
 const { Config } = require('./src/config');
 const { Logger } = require('./src/utils');
 
 const config = new Config();
 const logger = new Logger();
-const bot = new MiningBot(config, logger);
+const bot = new TradingBot(config, logger);
 
 await bot.start();
 ```
 
-### Advanced Usage
+### Advanced Configuration
 
 ```javascript
-// Custom configuration
+// Custom risk management
 const config = new Config();
-config.set('CONSERVATIVE_MODE', false);
-config.set('MAX_GAMES', 50);
-config.set('DEBUG', true);
+config.set('RISK_PERCENT', 0.5); // Conservative 0.5% risk
+config.set('MIN_SETUP_SCORE', 7); // High confidence trades only
+config.set('STOP_LOSS_PERCENT', 0.3); // Tight stop loss
 
-// Custom logger
-const logger = new Logger({
-    logLevel: 'debug',
-    saveToFile: true,
-    logFile: 'logs/bot.log'
-});
-
-const bot = new MiningBot(config, logger);
+const bot = new TradingBot(config, logger);
 await bot.start();
 ```
-
-### Console Commands
-
-When running in debug mode, you can use these console commands:
-
-- `cheat()` - Reveal optimal moves for current game state
-- `analyze()` - Show detailed analysis of current position
-- `flag()` - Automatically flag all detected mines
-- `stats()` - Display current session statistics
 
 ## 🏗️ Architecture
 
 ```
-ultimate-mine-bot/
-├── index.js              # Main entry point
+nasdaq-100-trading-bot/
+├── index.js                    # Main entry point
 ├── src/
-│   ├── bot.js            # Core bot logic and automation
-│   ├── game.js           # Game analysis and AI algorithms
-│   ├── utils.js          # Utility functions and helpers
-│   └── config.js         # Configuration management
-├── docs/
-│   └── SETUP.md          # Detailed setup guide
-├── examples/
-│   └── basic-usage.js    # Usage examples
-└── screenshots/          # Automatic screenshots (created at runtime)
+│   ├── trading-bot.js         # Main trading bot logic
+│   ├── market-data.js         # NASDAQ & ES market data service
+│   ├── news-service.js        # Forex Factory news integration
+│   ├── trading-strategy.js    # Trading algorithms and ML
+│   ├── config.js              # Configuration management
+│   └── utils.js               # Utilities and logging
+├── docs/                      # Documentation
+└── examples/                  # Usage examples
 ```
 
-## 🧮 Algorithms
+## 🧮 Trading Algorithms
 
-### Mine Detection
-- **Neighborhood Analysis**: Evaluates surrounding cells for mine probability
-- **Pattern Matching**: Recognizes common minesweeper patterns (1-2-1, corners, edges)
-- **Constraint Satisfaction**: Uses logical deduction for certain mine locations
-- **Probability Matrix**: Maintains probability maps for uncertain areas
+### Market Analysis
+- **Confluence Detection**: Analyzes alignment between NQ and ES
+- **Technical Indicators**: RSI, Moving Averages, Volume analysis
+- **News Correlation**: Filters trades based on economic events
+- **Risk Assessment**: Calculates optimal position sizes
 
-### Strategy Modes
-- **Conservative**: Always chooses the safest available move
-- **Aggressive**: Balances safety with speed for faster completion
-- **Learning**: Adapts strategy based on historical game patterns
+### Learning System
+- **Trade Outcome Analysis**: Studies what made trades successful/unsuccessful
+- **Pattern Recognition**: Identifies recurring profitable setups
+- **Performance Metrics**: Tracks and improves win rate over time
+- **Adaptive Parameters**: Adjusts trading rules based on market conditions
 
-## 📈 Performance
+### News Integration
+- **Economic Calendar**: Real-time Forex Factory data
+- **Impact Filtering**: Avoids trading during high-impact news
+- **Sentiment Analysis**: Gauges market sentiment from economic data
+- **Safety Protocols**: Prevents trading during volatile periods
 
-### Typical Results
-- **Win Rate**: 70-85% depending on game difficulty and configuration
-- **Average Game Time**: 30-60 seconds per game
-- **Safety Accuracy**: 95%+ for move safety prediction
-- **Pattern Recognition**: Learns and improves over 100+ games
+## 📈 Performance Features
 
-### Optimization Tips
-1. **Use Conservative Mode** for maximum win rate
-2. **Enable Pattern Learning** for long-term improvement
-3. **Adjust Delay Settings** to balance speed vs. detection avoidance
-4. **Monitor Statistics** to optimize configuration
+### Trade Execution
+- **One Trade Per Day**: Risk-managed approach
+- **Confluence Required**: Both NQ and ES must align
+- **News Safety Check**: Ensures no conflicting economic events
+- **Learning Integration**: Uses historical data to improve decisions
 
-## 🛡️ Safety Features
+### Outcome Reporting
+- **Real-time P&L**: Live profit/loss tracking
+- **Trade Analysis**: Detailed breakdown of each trade
+- **Learning Insights**: Shows adaptation from each outcome
+- **Performance Metrics**: Win rate, profit factor, streaks
 
-### Anti-Detection
-- **Human-like Timing**: Random delays between actions
-- **Natural Mouse Movement**: Smooth, curved cursor paths
-- **Realistic Behavior**: Mimics human decision-making patterns
-- **Session Breaks**: Automatic pauses to avoid detection
+### Machine Learning
+- **Pattern Memory**: Stores successful trading patterns
+- **Setup Scoring**: Rates trade setups based on historical success
+- **Adaptive Risk**: Adjusts position sizing based on confidence
+- **Continuous Improvement**: Gets better with each trade
 
-### Error Handling
-- **Graceful Shutdown**: Clean exit on interruption
-- **Auto-Recovery**: Continues after temporary errors
-- **Screenshot Logging**: Visual debugging for troubleshooting
-- **Comprehensive Logging**: Detailed logs for analysis
+## 🛡️ Risk Management
+
+### Position Sizing
+- **Percentage-based Risk**: Risk only 1% of account per trade
+- **Maximum Position Limits**: Prevents over-leveraging
+- **Dynamic Sizing**: Adjusts based on setup confidence
+- **Balance Protection**: Stops trading if account drops significantly
+
+### News Safety
+- **Red Folder Filtering**: Avoids high-impact economic news
+- **Event Scheduling**: Knows when major announcements occur
+- **Volatility Detection**: Pauses trading during unusual market conditions
+- **Time-based Restrictions**: Avoids trading during known volatile periods
 
 ## 🔧 Troubleshooting
 
@@ -254,22 +227,19 @@ ultimate-mine-bot/
 **Bot doesn't start:**
 - Check Node.js version (requires 14.0.0+)
 - Verify .env configuration
-- Ensure site URL is accessible
+- Ensure all required dependencies are installed
 
-**Game detection fails:**
-- Enable debug mode for detailed logging
-- Check if game interface has changed
-- Verify selectors in bot.js
+**No trades executed:**
+- Check if market is open (9:30 AM - 4:00 PM EST)
+- Verify MIN_SETUP_SCORE isn't too high
+- Check if news events are preventing trades
+- Ensure confluence requirements are met
 
 **Poor performance:**
-- Adjust strategy settings
-- Enable pattern learning
-- Check delay configurations
-
-**Browser issues:**
-- Update Chrome/Chromium
-- Disable antivirus interference
-- Try running with headless=false
+- Lower MIN_SETUP_SCORE for more trades
+- Adjust RISK_PERCENT for position sizing
+- Review news filtering settings
+- Check learning system metrics
 
 ### Debug Mode
 
@@ -280,26 +250,38 @@ DEBUG=true VERBOSE_LOGGING=true npm start
 ```
 
 This will:
-- Show browser window (non-headless)
-- Enable detailed console output
-- Save comprehensive logs
-- Take screenshots at each step
+- Show detailed market analysis
+- Log all trading decisions
+- Display learning algorithm progress
+- Provide comprehensive trade breakdowns
 
-## 📝 Development
+## 📊 Example Output
 
-### Adding New Games
+```
+🤖 NASDAQ 100 FUTURES TRADING BOT STATUS:
+⏰ Market Status: OPEN
+💰 Account Balance: $100,000.00
+📈 Total P&L: $1,250.00
+🎯 Trades Today: 1/1
+📰 News Safety: SAFE
 
-1. **Implement Game Detection**: Update `detectGameState()` in `bot.js`
-2. **Configure Selectors**: Add game-specific CSS selectors
-3. **Test Integration**: Use debug mode to verify compatibility
-4. **Update Configuration**: Add game-specific settings
+📊 TRADE COMPLETED:
+   Result: WIN (TAKE_PROFIT)
+   Entry: $15,125.50 → Exit: $15,275.25
+   P&L: $1,250.00 (0.99%)
+   Duration: 145 minutes
 
-### Contributing
+📈 LEARNING METRICS:
+   Win Rate: 73.5%
+   Profit Factor: 2.1
+   Consecutive: 3W / 0L
 
-1. Fork the repository
-2. Create a feature branch
-3. Implement changes with tests
-4. Submit a pull request
+🧠 LEARNING INSIGHTS:
+   Setup Score: 7/10
+   Confluence: Strong bullish alignment
+   News Environment: Safe trading conditions
+   Learning Points: High confidence setup succeeded, ES confirmation reliable
+```
 
 ## 📄 License
 
@@ -307,14 +289,14 @@ MIT License - see LICENSE file for details.
 
 ## ⚠️ Disclaimer
 
-This bot is for educational purposes only. Please ensure compliance with the terms of service of any websites you use it with. The developers are not responsible for any misuse or violations of service terms.
+This trading bot is for educational and research purposes. Trading futures involves substantial risk of loss and is not suitable for all investors. Past performance is not indicative of future results. Use at your own risk and ensure compliance with all applicable regulations.
 
 ## 🆘 Support
 
-- **Documentation**: See `docs/SETUP.md` for detailed setup instructions
-- **Issues**: Report bugs and feature requests on GitHub
-- **Examples**: Check `examples/` directory for usage patterns
+- **Documentation**: Comprehensive setup and usage guides
+- **Issues**: Report bugs and feature requests on GitHub  
+- **Examples**: Working examples in `examples/` directory
 
 ---
 
-**Made with ❤️ by the Ultimate Mine Bot Team**
+**Made with ❤️ for algorithmic traders**

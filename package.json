@@ -1,7 +1,7 @@
 {
-  "name": "ultimate-mine-bot",
+  "name": "nasdaq-100-trading-bot",
   "version": "1.0.0",
-  "description": "Advanced mining bot for web-based mining games with intelligent algorithms and automation",
+  "description": "Advanced NASDAQ 100 futures trading bot with news integration, confluence analysis, and machine learning",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -9,12 +9,14 @@
     "test": "echo \"Tests not yet implemented\" && exit 0"
   },
   "keywords": [
-    "mining",
+    "trading",
+    "nasdaq",
+    "futures",
     "bot",
     "automation",
-    "puppeteer",
-    "game",
-    "ai"
+    "machine-learning",
+    "finance",
+    "intraday"
   ],
   "author": "Ultimate Mine Bot Team",
   "license": "MIT",
@@ -22,7 +24,13 @@
     "puppeteer": "^22.15.0",
     "dotenv": "^16.4.5",
     "chalk": "^4.1.2",
-    "inquirer": "^8.2.6"
+    "inquirer": "^8.2.6",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "moment": "^2.29.4",
+    "moment-timezone": "^0.5.43",
+    "node-cron": "^3.0.3",
+    "ws": "^8.14.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

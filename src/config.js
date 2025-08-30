@@ -9,45 +9,58 @@ const fs = require('fs');
 class Config {
     constructor() {
         this.config = {
-            // Bandit.camp Site Configuration
-            SITE_URL: process.env.SITE_URL || 'https://bandit.camp/mines',
-            STEAM_USERNAME: process.env.STEAM_USERNAME || '',
-            STEAM_PASSWORD: process.env.STEAM_PASSWORD || '',
-            STEAM_GUARD_CODE: process.env.STEAM_GUARD_CODE || '',
+            // Trading Bot Configuration
+            TRADING_MODE: process.env.TRADING_MODE || 'futures', // futures, stocks, forex
+            SYMBOL: process.env.SYMBOL || 'NQ', // NASDAQ 100 futures
+            CONFLUENCE_SYMBOL: process.env.CONFLUENCE_SYMBOL || 'ES', // E-mini S&P 500
             
-            // Bot Behavior
-            HEADLESS: process.env.HEADLESS === 'true',
-            AUTO_PLAY: process.env.AUTO_PLAY === 'true',
+            // Account Settings
+            ACCOUNT_BALANCE: parseFloat(process.env.ACCOUNT_BALANCE) || 100000,
+            RISK_PERCENT: parseFloat(process.env.RISK_PERCENT) || 1.0, // 1% risk per trade
+            MAX_POSITION_SIZE: parseInt(process.env.MAX_POSITION_SIZE) || 5,
+            
+            // Trading Rules
+            MAX_TRADES_PER_DAY: parseInt(process.env.MAX_TRADES_PER_DAY) || 1,
+            MIN_SETUP_SCORE: parseInt(process.env.MIN_SETUP_SCORE) || 5,
+            STOP_LOSS_PERCENT: parseFloat(process.env.STOP_LOSS_PERCENT) || 0.5,
+            TAKE_PROFIT_PERCENT: parseFloat(process.env.TAKE_PROFIT_PERCENT) || 1.0,
+            
+            // Market Data Settings
+            MARKET_DATA_PROVIDER: process.env.MARKET_DATA_PROVIDER || 'mock',
+            MARKET_DATA_API_KEY: process.env.MARKET_DATA_API_KEY || '',
+            HISTORICAL_DATA_DAYS: parseInt(process.env.HISTORICAL_DATA_DAYS) || 30,
+            
+            // News Settings
+            NEWS_UPDATE_INTERVAL: parseInt(process.env.NEWS_UPDATE_INTERVAL) || 300000, // 5 minutes
+            FOREX_FACTORY_URL: process.env.FOREX_FACTORY_URL || 'https://www.forexfactory.com/calendar',
+            FILTER_RED_FOLDER_NEWS: process.env.FILTER_RED_FOLDER_NEWS === 'true',
+            NEWS_IMPACT_THRESHOLD: process.env.NEWS_IMPACT_THRESHOLD || 'medium',
+            
+            // Timing and Monitoring
             DELAY_MIN: parseInt(process.env.DELAY_MIN) || 1000,
             DELAY_MAX: parseInt(process.env.DELAY_MAX) || 3000,
-            MAX_GAMES: parseInt(process.env.MAX_GAMES) || 50,
+            MONITORING_INTERVAL: parseInt(process.env.MONITORING_INTERVAL) || 10000, // 10 seconds
             
-            // Bandit.camp Betting Settings
-            INITIAL_BET_AMOUNT: parseFloat(process.env.INITIAL_BET_AMOUNT) || 1.00,
-            MIN_BET_AMOUNT: parseFloat(process.env.MIN_BET_AMOUNT) || 0.10,
-            MAX_BET_AMOUNT: parseFloat(process.env.MAX_BET_AMOUNT) || 100.00,
-            BET_MULTIPLIER: parseFloat(process.env.BET_MULTIPLIER) || 1.5,
-            MIN_MINES: parseInt(process.env.MIN_MINES) || 3,
-            MAX_MINES: parseInt(process.env.MAX_MINES) || 24,
-            
-            // Advanced Betting Strategies
-            BETTING_STRATEGY: process.env.BETTING_STRATEGY || 'adaptive',
-            CONSERVATIVE_MULTIPLIER: parseFloat(process.env.CONSERVATIVE_MULTIPLIER) || 1.2,
-            AGGRESSIVE_MULTIPLIER: parseFloat(process.env.AGGRESSIVE_MULTIPLIER) || 2.5,
-            BALANCE_PROTECTION_THRESHOLD: parseFloat(process.env.BALANCE_PROTECTION_THRESHOLD) || 0.1,
-            PROFIT_TARGET_MULTIPLIER: parseFloat(process.env.PROFIT_TARGET_MULTIPLIER) || 1.5,
-            
-            // Smart Cheating Settings
-            ENABLE_SMART_CHEATING: process.env.ENABLE_SMART_CHEATING === 'true',
-            WIN_RATE_THRESHOLD: parseFloat(process.env.WIN_RATE_THRESHOLD) || 0.3,
-            CHEATING_CONFIDENCE_LEVEL: parseFloat(process.env.CHEATING_CONFIDENCE_LEVEL) || 0.85,
-            MAX_CONSECUTIVE_LOSSES: parseInt(process.env.MAX_CONSECUTIVE_LOSSES) || 5,
+            // Learning and Analytics
+            ENABLE_LEARNING: process.env.ENABLE_LEARNING !== 'false',
+            PATTERN_LEARNING: process.env.PATTERN_LEARNING !== 'false',
+            MEMORY_SIZE: parseInt(process.env.MEMORY_SIZE) || 1000,
             
             // Safety Settings
             STOP_ON_LOSS: process.env.STOP_ON_LOSS === 'true',
             MAX_LOSS_STREAK: parseInt(process.env.MAX_LOSS_STREAK) || 3,
             TAKE_SCREENSHOT: process.env.TAKE_SCREENSHOT === 'true',
-            AUTO_CASHOUT: process.env.AUTO_CASHOUT === 'true',
+            BALANCE_PROTECTION_THRESHOLD: parseFloat(process.env.BALANCE_PROTECTION_THRESHOLD) || 0.1,
+            
+            // Debug Settings
+            DEBUG: process.env.DEBUG === 'true',
+            VERBOSE_LOGGING: process.env.VERBOSE_LOGGING === 'true',
+            SAVE_LOGS: process.env.SAVE_LOGS !== 'false',
+            
+            // Deprecated Mining Game Settings (kept for backward compatibility)
+            HEADLESS: process.env.HEADLESS === 'true',
+            AUTO_PLAY: process.env.AUTO_PLAY === 'true',
+            MAX_GAMES: parseInt(process.env.MAX_GAMES) || 50,
             CASHOUT_MULTIPLIER: parseFloat(process.env.CASHOUT_MULTIPLIER) || 2.0,
             
             // Steam Authentication
@@ -140,10 +153,11 @@ class Config {
     
     getSummary() {
         const summary = {
-            site: this.config.SITE_URL || 'Not configured',
-            headless: this.config.HEADLESS,
-            autoPlay: this.config.AUTO_PLAY,
-            maxGames: this.config.MAX_GAMES,
+            mode: this.config.TRADING_MODE || 'futures',
+            symbol: this.config.SYMBOL || 'NQ',
+            confluenceSymbol: this.config.CONFLUENCE_SYMBOL || 'ES',
+            accountBalance: this.config.ACCOUNT_BALANCE || 100000,
+            maxTradesPerDay: this.config.MAX_TRADES_PER_DAY || 1,
             debug: this.config.DEBUG
         };
         return JSON.stringify(summary, null, 2);
@@ -152,44 +166,43 @@ class Config {
     async validate() {
         const errors = [];
         
-        // Check required environment variables for bandit.camp
-        if (!this.config.SITE_URL) {
-            errors.push('SITE_URL is required (should be https://bandit.camp/mines)');
+        // Check trading configuration
+        const validTradingModes = ['futures', 'stocks', 'forex'];
+        if (!validTradingModes.includes(this.config.TRADING_MODE)) {
+            errors.push(`TRADING_MODE must be one of: ${validTradingModes.join(', ')}`);
         }
         
-        if (this.config.AUTO_PLAY && this.config.STEAM_AUTO_LOGIN && 
-            (!this.config.STEAM_USERNAME || !this.config.STEAM_PASSWORD)) {
-            errors.push('STEAM_USERNAME and STEAM_PASSWORD are required for auto-play mode with Steam login');
+        // Validate account settings
+        if (this.config.ACCOUNT_BALANCE <= 0) {
+            errors.push('ACCOUNT_BALANCE must be positive');
         }
         
-        // Validate betting amounts
-        if (this.config.MIN_BET_AMOUNT <= 0 || this.config.MAX_BET_AMOUNT <= 0) {
-            errors.push('Bet amounts must be positive');
+        if (this.config.RISK_PERCENT <= 0 || this.config.RISK_PERCENT > 10) {
+            errors.push('RISK_PERCENT must be between 0 and 10');
         }
         
-        if (this.config.MIN_BET_AMOUNT > this.config.MAX_BET_AMOUNT) {
-            errors.push('MIN_BET_AMOUNT must be less than or equal to MAX_BET_AMOUNT');
+        if (this.config.MAX_POSITION_SIZE <= 0) {
+            errors.push('MAX_POSITION_SIZE must be positive');
         }
         
-        if (this.config.INITIAL_BET_AMOUNT < this.config.MIN_BET_AMOUNT || 
-            this.config.INITIAL_BET_AMOUNT > this.config.MAX_BET_AMOUNT) {
-            errors.push('INITIAL_BET_AMOUNT must be between MIN_BET_AMOUNT and MAX_BET_AMOUNT');
+        // Validate trading rules
+        if (this.config.MAX_TRADES_PER_DAY < 1 || this.config.MAX_TRADES_PER_DAY > 10) {
+            errors.push('MAX_TRADES_PER_DAY must be between 1 and 10');
         }
         
-        // Validate mines count
-        if (this.config.MIN_MINES < 1 || this.config.MAX_MINES > 24) {
-            errors.push('Mines count must be between 1 and 24');
+        if (this.config.MIN_SETUP_SCORE < 1 || this.config.MIN_SETUP_SCORE > 10) {
+            errors.push('MIN_SETUP_SCORE must be between 1 and 10');
         }
         
-        if (this.config.MIN_MINES > this.config.MAX_MINES) {
-            errors.push('MIN_MINES must be less than or equal to MAX_MINES');
+        if (this.config.STOP_LOSS_PERCENT <= 0 || this.config.STOP_LOSS_PERCENT > 5) {
+            errors.push('STOP_LOSS_PERCENT must be between 0 and 5');
+        }
+        
+        if (this.config.TAKE_PROFIT_PERCENT <= 0 || this.config.TAKE_PROFIT_PERCENT > 10) {
+            errors.push('TAKE_PROFIT_PERCENT must be between 0 and 10');
         }
         
         // Validate thresholds
-        if (this.config.WIN_RATE_THRESHOLD < 0 || this.config.WIN_RATE_THRESHOLD > 1) {
-            errors.push('WIN_RATE_THRESHOLD must be between 0 and 1');
-        }
-        
         if (this.config.BALANCE_PROTECTION_THRESHOLD < 0 || this.config.BALANCE_PROTECTION_THRESHOLD > 1) {
             errors.push('BALANCE_PROTECTION_THRESHOLD must be between 0 and 1');
         }
@@ -203,14 +216,12 @@ class Config {
             errors.push('DELAY_MIN must be less than or equal to DELAY_MAX');
         }
         
-        if (this.config.MAX_GAMES < 1) {
-            errors.push('MAX_GAMES must be at least 1');
+        if (this.config.MONITORING_INTERVAL < 1000) {
+            errors.push('MONITORING_INTERVAL must be at least 1000ms');
         }
         
-        // Validate betting strategy
-        const validStrategies = ['conservative', 'aggressive', 'adaptive', 'balanced'];
-        if (!validStrategies.includes(this.config.BETTING_STRATEGY)) {
-            errors.push(`BETTING_STRATEGY must be one of: ${validStrategies.join(', ')}`);
+        if (this.config.NEWS_UPDATE_INTERVAL < 60000) {
+            errors.push('NEWS_UPDATE_INTERVAL must be at least 60000ms (1 minute)');
         }
         
         // Check .env file exists
