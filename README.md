@@ -1,4 +1,4 @@
-# OpenShort.link - The All-in-One Open Source URL Shortener & Link Management Platform
+# OpenShort.link - The All-in-One Open Source Serverless URL Link Shortener. 100% on Cloudflare + 1 Click Install
 
 <div align="center">
 
@@ -18,7 +18,7 @@
 
 **The Open-Source, Serverless Link Shortener Built for Everyone.**
 
-OpenShort.link is a production-ready, open-source link shortener and management platform powered by Cloudflare. Whether you're a blogger, marketer, e-commerce business, or brand, OpenShort.link gives you the tools to shorten links, track clicks, and route users intelligently based on location or device—all from your own custom domain.
+OpenShort.link is an open-source link shortener deployable with a one-click install on Cloudflare, featuring full functionality and working on your existing domain with Cloudflare routing. Whether you're a blogger, marketer, e-commerce business, or brand, OpenShort.link gives you the tools to shorten links, track clicks, and route users intelligently based on location or device—all from your own custom domain.
 
 Deploy with a single click and manage your links across multiple domains with comprehensive analytics, team collaboration, and powerful automation.
 
