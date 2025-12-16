@@ -103,7 +103,8 @@ app.get('/dashboard/setup', async (c) => {
 
   const { setupHtml } = await import('./views/auth');
   const csrfToken = c.get('csrfToken') || '';
-  return c.html(setupHtml(csrfToken));
+  const nonce = c.get('nonce') || '';
+  return c.html(setupHtml(csrfToken, nonce));
 });
 
 // Dashboard - Static assets (moved from /static to /dashboard/static)

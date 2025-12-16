@@ -217,7 +217,7 @@ export const setupErrorHtml = html`<!DOCTYPE html>
 </body>
 </html>`;
 
-export const setupHtml = (csrfToken: string) => html`<!DOCTYPE html>
+export const setupHtml = (csrfToken: string, nonce: string) => html`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -278,7 +278,7 @@ export const setupHtml = (csrfToken: string) => html`<!DOCTYPE html>
       <a href="/dashboard/login" style="color: #007bff; text-decoration: none;">Already have an account? Login</a>
     </div>
   </div>
-  <script>
+  <script nonce="${raw(nonce)}">
     document.getElementById('setup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const setupToken = document.getElementById('setup-token').value;
