@@ -228,10 +228,9 @@ authRouter.post('/register', createRateLimit({
   // Set cookie - use Secure only in production (HTTPS)
   const isProduction = c.env.ENVIRONMENT === 'production';
   const secureFlag = isProduction ? 'Secure;' : '';
-  c.header('Set-Cookie', `session_token=${accessToken}; HttpOnly; ${secureFlag} SameSite=Strict; Path=/; Max-Age=${1 * 60 * 60}`);
-  c.header('Set-Cookie', `refresh_token=${refreshToken}; HttpOnly; ${secureFlag} SameSite=Strict; Path=/; Max-Age=${30 * 24 * 60 * 60}`);
 
-  return c.json({
+  // Create response with proper headers
+  const responseData = {
     success: true,
     data: {
       token: accessToken,
@@ -243,7 +242,20 @@ authRouter.post('/register', createRateLimit({
         role: user.role,
       },
     },
-  }, 201);
+  };
+
+  const response = new Response(JSON.stringify(responseData), {
+    status: 201,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // Append multiple Set-Cookie headers (append allows multiple headers with same name)
+  response.headers.append('Set-Cookie', `session_token=${accessToken}; HttpOnly; ${secureFlag} SameSite=Lax; Path=/; Max-Age=${1 * 60 * 60}`);
+  response.headers.append('Set-Cookie', `refresh_token=${refreshToken}; HttpOnly; ${secureFlag} SameSite=Strict; Path=/; Max-Age=${30 * 24 * 60 * 60}`);
+
+  return response;
 });
 
 // Logout
