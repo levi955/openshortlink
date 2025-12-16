@@ -268,8 +268,8 @@ export const setupHtml = (csrfToken: string) => html`<!DOCTYPE html>
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" required autocomplete="new-password" minlength="8">
-        <small>Minimum 8 characters</small>
+        <input type="password" id="password" required autocomplete="new-password" minlength="12">
+        <small>Minimum 12 characters with uppercase, lowercase, number, and special character</small>
       </div>
       <div id="error-message" class="error" style="display: none;"></div>
       <button type="submit" class="btn">Create Owner Account</button>
@@ -288,8 +288,29 @@ export const setupHtml = (csrfToken: string) => html`<!DOCTYPE html>
       const errorDiv = document.getElementById('error-message');
       const csrfToken = document.getElementById('csrf-token').value;
       
-      if (password.length < 8) {
-        errorDiv.textContent = 'Password must be at least 8 characters';
+      // Client-side password validation matching backend requirements
+      if (password.length < 12) {
+        errorDiv.textContent = 'Password must be at least 12 characters long';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      if (!/[A-Z]/.test(password)) {
+        errorDiv.textContent = 'Password must contain at least one uppercase letter';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      if (!/[a-z]/.test(password)) {
+        errorDiv.textContent = 'Password must contain at least one lowercase letter';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      if (!/[0-9]/.test(password)) {
+        errorDiv.textContent = 'Password must contain at least one number';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        errorDiv.textContent = 'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\\':"\\|,.<>/? etc.)';
         errorDiv.style.display = 'block';
         return;
       }
