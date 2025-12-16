@@ -132,6 +132,7 @@ The easiest way to get started. This defaults to a completely automated setup.
     -   You will be guided to authorize Cloudflare Workers.
     -   The system will **automatically fork** this repository to your GitHub account.
     -   It will **automatically create** the required D1 database (`openshortlink-db`) and KV namespace (`CACHE`).
+    -   **Database migrations are applied automatically** during deployment.
     -   **Enter Secrets**: You will be prompted to enter values for:
         -   `SETUP_TOKEN`: Choose based on your security needs:
             -   **🔐 Production (Most Secure)**: Generate with `openssl rand -hex 32`
