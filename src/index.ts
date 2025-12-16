@@ -291,7 +291,7 @@ app.get('*', async (c) => {
   const { domain: domainObj, matchedRoute } = result;
 
   // Extract slug from path using the matched route
-  const routingPath = matchedRoute.replace('*', '').replace(/\/$/, '');
+  const routingPath = matchedRoute.replace(/\*/g, '').replace(/\/$/, '');
   const slug = path.replace(routingPath, '').replace(/^\//, '').replace(/\/$/, '');
 
   if (!slug) {

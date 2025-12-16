@@ -331,7 +331,7 @@ export async function getDomainByRoutingPath(env: Env, domainName: string, path:
     // Check each route
     for (const route of routesToCheck) {
       // Remove wildcard and trailing slash for matching
-      const routingPath = route.replace('*', '').replace(/\/$/, '');
+      const routingPath = route.replace(/\*/g, '').replace(/\/$/, '');
       const normalizedRoutingPath = routingPath.startsWith('/') ? routingPath : `/${routingPath}`;
 
       // Check if path matches routing path

@@ -247,7 +247,7 @@ export async function apiKeyMiddleware(c: Context<{ Bindings: Env }>, next: Next
         throw error; // Re-throw HTTPException (IP not whitelisted)
       }
       // Invalid JSON, treat as configuration error
-      console.error('Invalid IP whitelist JSON format for API key:', verifiedKey.id, error);
+      console.error('Invalid IP whitelist JSON format for API key');
       throw new HTTPException(500, { message: 'Invalid IP whitelist configuration' });
     }
   }
