@@ -319,24 +319,118 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
             
             <!-- Authentication Section -->
             <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem;">
-              <h3 style="margin-bottom: 1rem; color: #007bff;">Authentication</h3>
+              <h3 style="margin-bottom: 1rem; color: #007bff;">🔐 Authentication</h3>
               <p style="margin-bottom: 1rem; color: #666;">All API requests require authentication using an API key in the Authorization header:</p>
               <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; border-left: 4px solid #007bff; margin-bottom: 1rem;">
                 <code style="font-family: monospace; font-size: 0.9rem;">Authorization: Bearer &lt;your_api_key&gt;</code>
               </div>
+              
               <p style="margin-bottom: 0.5rem; color: #666;"><strong>Base URL:</strong></p>
-              <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+              <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
                 <code id="api-base-url" style="font-family: monospace; font-size: 0.9rem;">/api/v1</code>
               </div>
+              
+              <details style="margin-bottom: 1rem;">
+                <summary style="cursor: pointer; padding: 0.75rem; background: #f8f9fa; border-radius: 4px; font-weight: 600; color: #333; user-select: none;">
+                  🔐 API Key Details - Click to expand/collapse
+                </summary>
+                <div style="padding: 1rem 0;">
+                  <h4 style="margin: 1rem 0 0.5rem 0; color: #333;">📋 API Key Format</h4>
+                  <p style="margin-bottom: 0.5rem; color: #666;">API keys follow this format:</p>
+                  <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                    <code style="font-family: monospace; font-size: 0.9rem;">sk_live_&lt;random_string&gt;</code>
+                  </div>
+                  <ul style="margin: 0.5rem 0 1.5rem 1.5rem; color: #666;">
+                    <li><strong>sk_live_</strong> - Prefix indicating a live API key</li>
+                    <li>Keys are shown only once during creation - store them securely</li>
+                    <li>Keys are hashed in the database for security</li>
+                  </ul>
+                  
+                  <h4 style="margin: 1.5rem 0 0.5rem 0; color: #333;">🌐 Domain Scoping</h4>
+                  <p style="margin-bottom: 0.5rem; color: #666;">API keys can be scoped to specific domains:</p>
+                  <ul style="margin: 0.5rem 0 1.5rem 1.5rem; color: #666;">
+                    <li><strong>All Domains:</strong> Leave domain_ids empty during creation</li>
+                    <li><strong>Specific Domains:</strong> Provide array of domain IDs to restrict access</li>
+                    <li>Scoped keys can only access resources within assigned domains</li>
+                  </ul>
+                  
+                  <h4 style="margin: 1.5rem 0 0.5rem 0; color: #333;">🔒 IP Whitelisting</h4>
+                  <p style="margin-bottom: 0.5rem; color: #666;">Control which IPs can use your API key:</p>
+                  <ul style="margin: 0.5rem 0 0 1.5rem; color: #666;">
+                    <li><strong>Allow All IPs:</strong> Set <code>allow_all_ips: true</code></li>
+                    <li><strong>Whitelist Specific IPs:</strong> Provide array of IP addresses in <code>ip_whitelist</code></li>
+                    <li>Both IPv4 and IPv6 addresses are supported</li>
+                  </ul>
+                  
+                  <h4 style="margin: 1.5rem 0 0.5rem 0; color: #333;">⚠️ Error Codes</h4>
+                  <p style="margin-bottom: 1rem; color: #666;">All API responses follow a consistent format. Errors include a status code and descriptive message.</p>
+                  
+                  <h5 style="margin: 1rem 0 0.5rem 0; color: #555; font-size: 0.95rem;">Standard Error Codes</h5>
+                  <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
+                    <thead>
+                      <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Code</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Name</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 0.75rem; font-family: monospace; color: #dc3545;">400</td>
+                        <td style="padding: 0.75rem; font-weight: 500;">Bad Request</td>
+                        <td style="padding: 0.75rem; color: #666;">Invalid parameters, validation errors, or malformed request</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 0.75rem; font-family: monospace; color: #dc3545;">401</td>
+                        <td style="padding: 0.75rem; font-weight: 500;">Unauthorized</td>
+                        <td style="padding: 0.75rem; color: #666;">Missing, invalid, or expired API key</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 0.75rem; font-family: monospace; color: #dc3545;">403</td>
+                        <td style="padding: 0.75rem; font-weight: 500;">Forbidden</td>
+                        <td style="padding: 0.75rem; color: #666;">Access denied to resource, domain not in scope, or insufficient permissions</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 0.75rem; font-family: monospace; color: #dc3545;">404</td>
+                        <td style="padding: 0.75rem; font-weight: 500;">Not Found</td>
+                        <td style="padding: 0.75rem; color: #666;">Resource doesn't exist or has been deleted</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 0.75rem; font-family: monospace; color: #dc3545;">408</td>
+                        <td style="padding: 0.75rem; font-weight: 500;">Request Timeout</td>
+                        <td style="padding: 0.75rem; color: #666;">Query took too long to execute (only for complex list operations)</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 0.75rem; font-family: monospace; color: #dc3545;">409</td>
+                        <td style="padding: 0.75rem; font-weight: 500;">Conflict</td>
+                        <td style="padding: 0.75rem; color: #666;">Resource already exists (e.g., slug, domain, tag, or category name)</td>
+                      </tr>
+                      <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 0.75rem; font-family: monospace; color: #dc3545;">429</td>
+                        <td style="padding: 0.75rem; font-weight: 500;">Too Many Requests</td>
+                        <td style="padding: 0.75rem; color: #666;">Rate limit exceeded (applies to failed authentication attempts)</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0.75rem; font-family: monospace; color: #dc3545;">500</td>
+                        <td style="padding: 0.75rem; font-weight: 500;">Internal Server Error</td>
+                        <td style="padding: 0.75rem; color: #666;">Server-side error occurred</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+              
               <div style="background: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107;">
-                <p style="margin: 0; color: #856404;"><strong>⚠️ Important:</strong></p>
+                <p style="margin: 0; color: #856404;"><strong>⚠️ Security Requirements:</strong></p>
                 <ul style="margin: 0.5rem 0 0 1.5rem; color: #856404;">
                   <li>API keys must be active and not expired</li>
                   <li>Your IP address must be whitelisted (if IP whitelist is enabled)</li>
                   <li>Domain scoping applies - you can only access domains assigned to your API key</li>
+                  <li>Never expose API keys in client-side code or public repositories</li>
                 </ul>
               </div>
             </div>
+
             
             <!-- Endpoints Documentation -->
             <div id="api-endpoints-docs"></div>
@@ -1813,15 +1907,8 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
         }
       });
       
-      // Default submit handler - only used when not in edit mode
-      // Edit mode will override this with form.onsubmit
-      form?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        // Only call createLink if slug is not disabled (not in edit mode)
-        if (!document.getElementById('link-slug').disabled) {
-        await createLink();
-        }
-      });
+      // NOTE: form.onsubmit is set in resetModal() for create mode
+      // and overridden in editLink() for edit mode. No addEventListener needed.
     }
     let availableDomains = []; // Store domains for route selection
 
@@ -7586,8 +7673,9 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
           { name: 'search', type: 'string', required: false, description: 'Search in slug, destination URL, or title' },
           { name: 'tag_id', type: 'string', required: false, description: 'Filter by tag ID' },
           { name: 'category_id', type: 'string', required: false, description: 'Filter by category ID' },
-          { name: 'limit', type: 'number', required: false, description: 'Results per page (1-500, default: 25)' },
-          { name: 'offset', type: 'number', required: false, description: 'Pagination offset (default: 0)' }
+          { name: 'limit', type: 'number', required: false, description: 'Results per page (1-10000, default: 25)' },
+          { name: 'offset', type: 'number', required: false, description: 'Pagination offset (default: 0)' },
+          { name: 'include_redirects', type: 'boolean', required: false, description: 'Include geo and device redirects in response (default: false)' }
         ],
         bodyParams: null,
         fileUpload: false,
@@ -7763,11 +7851,13 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
         name: 'Delete Link',
         method: 'DELETE',
         path: '/links/:id',
-        description: 'Delete a link.',
+        description: 'Delete a link (soft delete by default, or permanent delete with hard=true).',
         pathParams: [
           { name: 'id', type: 'string', required: true, description: 'Link ID' }
         ],
-        queryParams: [],
+        queryParams: [
+          { name: 'hard', type: 'string', required: false, description: 'Hard delete (true/false, default: false for soft delete)' }
+        ],
         bodyParams: null,
         fileUpload: false,
         exampleRequest: {
@@ -7779,56 +7869,35 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
         }
       },
       {
-        id: 'bulk-create-links',
-        name: 'Bulk Create Links',
+        id: 'bulk-operations',
+        name: 'Bulk Operations',
         method: 'POST',
         path: '/links/bulk',
-        description: 'Create multiple links in a single request.',
+        description: 'Perform bulk operations (update or delete) on multiple links.',
         pathParams: [],
         queryParams: [],
         bodyParams: {
-          links: {
-            type: 'array',
-            required: true,
-            description: 'Array of link objects',
-            items: {
-              domain_id: { type: 'string', required: true },
-              slug: { type: 'string', required: false },
-              destination_url: { type: 'string', required: true },
-              title: { type: 'string', required: false },
-              description: { type: 'string', required: false },
-              redirect_code: { type: 'number', required: false },
-              tags: { type: 'array', required: false },
-              category_id: { type: 'string', required: false }
-            }
-          }
+          action: { type: 'string', required: true, description: 'Action to perform: "update" or "delete"' },
+          link_ids: { type: 'array', required: true, description: 'Array of link IDs to operate on' },
+          updates: { type: 'object', required: false, description: 'Update fields (only for "update" action). Can include: destination_url, title, description, status, tags, category_id, geo_redirects, device_redirects, etc.' }
         },
         fileUpload: false,
         exampleRequest: {
           body: {
-            links: [
-              {
-                domain_id: 'domain_xxx',
-                destination_url: 'https://example.com/1',
-                slug: 'link1'
-              },
-              {
-                domain_id: 'domain_xxx',
-                destination_url: 'https://example.com/2',
-                slug: 'link2'
-              }
-            ]
+            action: 'update',
+            link_ids: ['link_xxx1', 'link_xxx2'],
+            updates: {
+              status: 'archived',
+              tags: ['tag_xxx']
+            }
           }
         },
         exampleResponse: {
           success: true,
-          data: {
-            created: [
-              { id: 'link_xxx1', slug: 'link1' },
-              { id: 'link_xxx2', slug: 'link2' }
-            ],
-            errors: []
-          }
+          data: [
+            { id: 'link_xxx1', success: true },
+            { id: 'link_xxx2', success: true }
+          ]
         }
       },
       {
@@ -7840,10 +7909,10 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
         pathParams: [],
         queryParams: [],
         bodyParams: {
-          file: { type: 'file', required: true, description: 'CSV/TSV file' },
+          file: { type: 'file', required: true, description: 'CSV/TSV file (max 5MB)' },
           domain_id: { type: 'string', required: true, description: 'Domain ID' },
           delimiter: { type: 'string', required: false, description: 'Field delimiter (auto-detect if not provided, default: ",")' },
-          column_mapping: { type: 'object', required: false, description: 'Column mapping JSON object' },
+          column_mapping: { type: 'object', required: true, description: 'Column mapping JSON object (maps CSV columns to link fields)' },
           slug_prefix_filter: { type: 'object', required: false, description: 'Slug prefix filter JSON object' }
         },
         fileUpload: true,
@@ -8316,7 +8385,12 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
         pathParams: [
           { name: 'id', type: 'string', required: true, description: 'Link ID' }
         ],
-        queryParams: [],
+        queryParams: [
+          { name: 'start_date', type: 'string', required: false, description: 'Start date (ISO format)' },
+          { name: 'end_date', type: 'string', required: false, description: 'End date (ISO format)' },
+          { name: 'group_by', type: 'string', required: false, description: 'Group by (day, week, month, default: day)' },
+          { name: 'data_source', type: 'string', required: false, description: 'Data source (auto, analytics_engine, d1, default: auto)' }
+        ],
         bodyParams: null,
         fileUpload: false,
         exampleRequest: {
@@ -8345,11 +8419,13 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
         description: 'Get dashboard analytics with optional filtering.',
         pathParams: [],
         queryParams: [
-          { name: 'link_id', type: 'string', required: false, description: 'Filter by link ID' },
+          { name: 'link_id', type: 'string', required: false, description: 'Filter by single link ID' },
+          { name: 'link_ids', type: 'string', required: false, description: 'Filter by multiple link IDs (comma-separated)' },
           { name: 'domain_id', type: 'string', required: false, description: 'Filter by domain ID' },
           { name: 'start_date', type: 'string', required: false, description: 'Start date (ISO format)' },
           { name: 'end_date', type: 'string', required: false, description: 'End date (ISO format)' },
-          { name: 'group_by', type: 'string', required: false, description: 'Group by (day, week, month, default: day)' }
+          { name: 'group_by', type: 'string', required: false, description: 'Group by (day, week, month, default: day)' },
+          { name: 'data_source', type: 'string', required: false, description: 'Data source (auto, analytics_engine, d1, default: auto)' }
         ],
         bodyParams: null,
         fileUpload: false,
@@ -8410,7 +8486,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
           { name: 'domain_id', type: 'string', required: false, description: 'Filter by domain ID' },
           { name: 'status_code', type: 'number', required: false, description: 'Filter by status code (e.g., 200, 404, 500)' },
           { name: 'search', type: 'string', required: false, description: 'Search in destination URL' },
-          { name: 'limit', type: 'number', required: false, description: 'Results per page (1-500, default: 25)' },
+          { name: 'limit', type: 'number', required: false, description: 'Results per page (1-10000, default: 25)' },
           { name: 'offset', type: 'number', required: false, description: 'Pagination offset (default: 0)' }
         ],
         bodyParams: null,
@@ -8447,7 +8523,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
         pathParams: [],
         queryParams: [
           { name: 'destination_url', type: 'string', required: true, description: 'Destination URL to search for' },
-          { name: 'limit', type: 'number', required: false, description: 'Results per page (1-500, default: 25)' },
+          { name: 'limit', type: 'number', required: false, description: 'Results per page (1-10000, default: 25)' },
           { name: 'offset', type: 'number', required: false, description: 'Pagination offset (default: 0)' }
         ],
         bodyParams: null,
@@ -8532,7 +8608,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
         pathParams: [],
         queryParams: [],
         bodyParams: {
-          link_ids: { type: 'array', required: true, description: 'Array of link IDs to check' }
+          link_ids: { type: 'array', required: false, description: 'Array of link IDs to check (if empty, checks all links)' }
         },
         fileUpload: false,
         exampleRequest: {
@@ -10334,26 +10410,14 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
       doc += '2. Navigate to Integrations > API Keys\\n';
       doc += '3. Create a new API key\\n';
       doc += '4. Copy the key immediately (it will not be shown again)\\n\\n';
-      doc += '## Rate Limiting\\n\\n';
-      doc += 'API requests are rate limited to prevent abuse. Rate limits vary by endpoint:\\n';
-      doc += '- Most endpoints: 100 requests per minute\\n';
-      doc += '- Link creation: 50 requests per minute\\n';
-      doc += '- Domain creation: 10 requests per minute\\n';
-      doc += '- Tag/Category creation: 50 requests per minute\\n\\n';
-      doc += 'Rate limit headers are included in responses:\\n';
-      const backtick2 = String.fromCharCode(96);
-      doc += '- ' + backtick2 + 'X-RateLimit-Limit' + backtick2 + ': Maximum requests allowed\\n';
-      doc += '- ' + backtick2 + 'X-RateLimit-Remaining' + backtick2 + ': Remaining requests in current window\\n';
-      doc += '- ' + backtick2 + 'X-RateLimit-Reset' + backtick2 + ': Time when the rate limit resets\\n\\n';
+
       doc += '## Error Handling\\n\\n';
       doc += 'All errors follow a consistent format:\\n\\n';
       doc += codeBlock + 'json\\n';
       doc += JSON.stringify({
         success: false,
         error: {
-          code: 'ERROR_CODE',
-          message: 'Human-readable error message',
-          details: {}
+          message: 'Human-readable error message'
         }
       }, null, 2) + '\\n';
       doc += codeBlock + '\\n\\n';
@@ -10363,8 +10427,9 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
       doc += '- ' + backtick3 + '401' + backtick3 + ': Unauthorized - Invalid or missing API key\\n';
       doc += '- ' + backtick3 + '403' + backtick3 + ': Forbidden - Domain not allowed for this API key or insufficient permissions\\n';
       doc += '- ' + backtick3 + '404' + backtick3 + ': Not Found - Resource not found\\n';
+      doc += '- ' + backtick3 + '408' + backtick3 + ': Request Timeout - Query took too long to execute\\n';
       doc += '- ' + backtick3 + '409' + backtick3 + ': Conflict - Resource already exists (e.g., slug already in use)\\n';
-      doc += '- ' + backtick3 + '429' + backtick3 + ': Too Many Requests - Rate limit exceeded\\n';
+      doc += '- ' + backtick3 + '429' + backtick3 + ': Too Many Requests - Rate limit exceeded (failed auth attempts)\\n';
       doc += '- ' + backtick3 + '500' + backtick3 + ': Internal Server Error - Server error\\n\\n';
       doc += '## Response Format\\n\\n';
       doc += 'All successful responses follow this format:\\n\\n';
@@ -10383,7 +10448,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
       doc += '## Pagination\\n\\n';
       const backtick4 = String.fromCharCode(96);
       doc += 'List endpoints support pagination using ' + backtick4 + 'limit' + backtick4 + ' and ' + backtick4 + 'offset' + backtick4 + ' query parameters:\\n';
-      doc += '- ' + backtick4 + 'limit' + backtick4 + ': Number of results per page (1-500, default: 25)\\n';
+      doc += '- ' + backtick4 + 'limit' + backtick4 + ': Number of results per page (1-10000 for links, 1-500 for other resources, default: 25)\\n';
       doc += '- ' + backtick4 + 'offset' + backtick4 + ': Number of results to skip (default: 0)\\n\\n';
       doc += 'Pagination information is included in the response:\\n';
       doc += '- ' + backtick4 + 'total' + backtick4 + ': Total number of results\\n';
@@ -10499,7 +10564,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
     }
     
     function generateOpenaiJson() {
-      const baseUrl = 'https://example.com' + API_BASE;
+      const baseUrl = window.location.origin + API_BASE;
       
       // Build OpenAPI 3.0 spec
       const openapi = {
@@ -10585,6 +10650,9 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
             '404': {
               description: 'Not Found - Resource not found'
             },
+            '408': {
+              description: 'Request Timeout - Query took too long to execute'
+            },
             '409': {
               description: 'Conflict - Resource already exists'
             },
@@ -10641,6 +10709,8 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
               schema = { type: 'array', items: { type: 'string' } };
             } else if (paramType === 'object') {
               schema = { type: 'object', additionalProperties: true };
+            } else if (paramType === 'file') {
+              schema = { type: 'string', format: 'binary' };
             } else {
               schema = { type: 'string' };
             }
@@ -10655,16 +10725,19 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
             }
           });
           
+          // Use multipart/form-data for file uploads
+          const contentType = endpoint.fileUpload ? 'multipart/form-data' : 'application/json';
+          
           operation.requestBody = {
             required: bodyRequired.length > 0,
             content: {
-              'application/json': {
+              [contentType]: {
                 schema: {
                   type: 'object',
                   properties: bodyProperties,
                   required: bodyRequired.length > 0 ? bodyRequired : undefined
                 },
-                example: endpoint.exampleRequest?.body || {}
+                example: endpoint.fileUpload ? undefined : (endpoint.exampleRequest?.body || {})
               }
             }
           };

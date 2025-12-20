@@ -12,6 +12,7 @@ import {
 } from '../db/users';
 import { hashPassword } from '../utils/crypto';
 import { authMiddleware } from '../middleware/auth';
+import { validateJson } from '../middleware/validate';
 import { requireRole } from '../middleware/authorization';
 import { createUserSchema, updateUserSchema, setUserDomainsSchema } from '../utils/validation';
 import { setUserDomains, getUserDomains, getAllUserDomains } from '../db/userDomains';
@@ -91,9 +92,8 @@ usersRouter.get('/:id', authMiddleware, requireRole(['admin', 'owner']), async (
 });
 
 // Create user (admin only)
-usersRouter.post('/', authMiddleware, requireRole(['admin', 'owner']), async (c) => {
-  const body = await c.req.json();
-  const validated = createUserSchema.parse(body);
+usersRouter.post('/', authMiddleware, requireRole(['admin', 'owner']), validateJson(createUserSchema), async (c) => {
+  const validated = c.req.valid('json');
 
   // Check if username already exists
   const existingUser = await getUserByUsername(c.env, validated.username);
@@ -174,10 +174,9 @@ usersRouter.post('/', authMiddleware, requireRole(['admin', 'owner']), async (c)
 });
 
 // Update user (admin only)
-usersRouter.put('/:id', authMiddleware, requireRole(['admin', 'owner']), async (c) => {
+usersRouter.put('/:id', authMiddleware, requireRole(['admin', 'owner']), validateJson(updateUserSchema), async (c) => {
   const id = c.req.param('id');
-  const body = await c.req.json();
-  const validated = updateUserSchema.parse(body);
+  const validated = c.req.valid('json');
 
   const existingUser = await getUserById(c.env, id);
   if (!existingUser) {
@@ -285,11 +284,10 @@ usersRouter.put('/:id', authMiddleware, requireRole(['admin', 'owner']), async (
 });
 
 // Set user's domain access (admin only)
-usersRouter.put('/:id/domains', authMiddleware, requireRole(['admin', 'owner']), async (c) => {
+usersRouter.put('/:id/domains', authMiddleware, requireRole(['admin', 'owner']), validateJson(setUserDomainsSchema), async (c) => {
   try {
     const id = c.req.param('id');
-    const body = await c.req.json();
-    const validated = setUserDomainsSchema.parse(body);
+    const validated = c.req.valid('json');
 
     const user = await getUserById(c.env, id);
     if (!user) {

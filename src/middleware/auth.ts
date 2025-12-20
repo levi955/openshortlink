@@ -2,7 +2,7 @@
 
 import type { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import type { Env, ApiKeyContext } from '../types';
+import type { Env, ApiKeyContext, Variables } from '../types';
 import { getSessionTokenFromRequest, getSession, type Session } from '../services/session';
 import { getUserById } from '../db/users';
 import { getUserDomainIds } from '../db/userDomains';
@@ -12,11 +12,44 @@ import { getApiKeyByHash, listApiKeys, updateLastUsed } from '../db/apiKeys';
 // Domain cache TTL (5 minutes) - matches session.ts
 const DOMAIN_CACHE_TTL = 5 * 60;
 
-export async function authMiddleware(c: Context<{ Bindings: Env }>, next: Next) {
+// Failed auth rate limit: 10 failures per minute per IP
+const FAILED_AUTH_LIMIT = 10;
+const FAILED_AUTH_WINDOW = 60; // seconds
+
+// Helper: Check if IP is rate limited due to too many auth failures
+async function checkAuthFailureRateLimit(env: Env, ip: string): Promise<boolean> {
+  const key = `auth_fail:${ip}:${Math.floor(Date.now() / 1000 / FAILED_AUTH_WINDOW)}`;
+  const count = parseInt(await env.CACHE.get(key) || '0');
+  return count >= FAILED_AUTH_LIMIT;
+}
+
+// Helper: Increment auth failure counter for IP
+async function trackAuthFailure(env: Env, ip: string): Promise<void> {
+  const key = `auth_fail:${ip}:${Math.floor(Date.now() / 1000 / FAILED_AUTH_WINDOW)}`;
+  const count = parseInt(await env.CACHE.get(key) || '0');
+  await env.CACHE.put(key, String(count + 1), { expirationTtl: FAILED_AUTH_WINDOW });
+}
+
+// Helper: Get client IP from request
+function getClientIp(c: Context<{ Bindings: Env; Variables: Variables }>): string {
+  return c.req.header('cf-connecting-ip') || 
+         c.req.header('x-forwarded-for')?.split(',')[0] || 
+         'unknown';
+}
+
+export async function authMiddleware(c: Context<{ Bindings: Env; Variables: Variables }>, next: Next) {
+  const ip = getClientIp(c);
+  
+  // Check if IP is blocked due to too many failed auth attempts
+  if (await checkAuthFailureRateLimit(c.env, ip)) {
+    throw new HTTPException(429, { message: 'Too many failed authentication attempts. Please try again later.' });
+  }
+
   // Get session token from request
   const token = getSessionTokenFromRequest(c.req.raw);
   
   if (!token) {
+    await trackAuthFailure(c.env, ip);
     throw new HTTPException(401, { message: 'Authentication required' });
   }
 
@@ -24,6 +57,7 @@ export async function authMiddleware(c: Context<{ Bindings: Env }>, next: Next) 
   const session = await getSession(c.env, token);
   
   if (!session) {
+    await trackAuthFailure(c.env, ip);
     throw new HTTPException(401, { message: 'Invalid or expired session' });
   }
 
@@ -31,6 +65,7 @@ export async function authMiddleware(c: Context<{ Bindings: Env }>, next: Next) 
   const user = await getUserById(c.env, session.user_id);
   
   if (!user) {
+    await trackAuthFailure(c.env, ip);
     throw new HTTPException(401, { message: 'User not found' });
   }
 
@@ -52,7 +87,7 @@ export async function authMiddleware(c: Context<{ Bindings: Env }>, next: Next) 
 
     if (cacheValid) {
       // Use cached data (FAST PATH - no DB query)
-      accessibleDomainIds = session.accessible_domain_ids;
+      accessibleDomainIds = session.accessible_domain_ids ?? [];
     } else {
       // Cache is stale - refresh from database
       accessibleDomainIds = await getUserDomainIds(c.env, user.id);
@@ -91,7 +126,7 @@ export async function authMiddleware(c: Context<{ Bindings: Env }>, next: Next) 
   await next();
 }
 
-export async function optionalAuth(c: Context<{ Bindings: Env }>, next: Next) {
+export async function optionalAuth(c: Context<{ Bindings: Env; Variables: Variables }>, next: Next) {
   // Optional authentication - doesn't fail if no auth
   const token = getSessionTokenFromRequest(c.req.raw);
   
@@ -118,7 +153,7 @@ export async function optionalAuth(c: Context<{ Bindings: Env }>, next: Next) {
 
           if (cacheValid) {
             // Use cached data (FAST PATH - no DB query)
-            accessibleDomainIds = session.accessible_domain_ids;
+            accessibleDomainIds = session.accessible_domain_ids ?? [];
           } else {
             // Cache is stale - refresh from database
             accessibleDomainIds = await getUserDomainIds(c.env, user.id);
@@ -160,11 +195,19 @@ export async function optionalAuth(c: Context<{ Bindings: Env }>, next: Next) {
 }
 
 // API key authentication middleware
-export async function apiKeyMiddleware(c: Context<{ Bindings: Env }>, next: Next) {
+export async function apiKeyMiddleware(c: Context<{ Bindings: Env; Variables: Variables }>, next: Next) {
+  const ip = getClientIp(c);
+  
+  // Check if IP is blocked due to too many failed auth attempts
+  if (await checkAuthFailureRateLimit(c.env, ip)) {
+    throw new HTTPException(429, { message: 'Too many failed authentication attempts. Please try again later.' });
+  }
+
   // Check for API key in Authorization header
   const authHeader = c.req.header('Authorization');
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    await trackAuthFailure(c.env, ip);
     throw new HTTPException(401, { message: 'API key required' });
   }
   
@@ -172,6 +215,7 @@ export async function apiKeyMiddleware(c: Context<{ Bindings: Env }>, next: Next
   
   // Extract prefix (first 16 chars: "sk_live_ab12cd34")
   if (providedKey.length < 16) {
+    await trackAuthFailure(c.env, ip);
     throw new HTTPException(401, { message: 'Invalid API key format' });
   }
   
@@ -183,6 +227,7 @@ export async function apiKeyMiddleware(c: Context<{ Bindings: Env }>, next: Next
   ).bind(keyPrefix).all<{ id: string; key_hash: string; user_id: string; allow_all_ips: number; ip_whitelist: string | null; expires_at: number | null; domain_ids?: string[] }>();
   
   if (!allApiKeys.results || allApiKeys.results.length === 0) {
+    await trackAuthFailure(c.env, ip);
     throw new HTTPException(401, { message: 'Invalid API key' });
   }
   
@@ -197,6 +242,7 @@ export async function apiKeyMiddleware(c: Context<{ Bindings: Env }>, next: Next
   }
   
   if (!verifiedKey) {
+    await trackAuthFailure(c.env, ip);
     throw new HTTPException(401, { message: 'Invalid API key' });
   }
   
@@ -206,6 +252,7 @@ export async function apiKeyMiddleware(c: Context<{ Bindings: Env }>, next: Next
     await c.env.DB.prepare(
       `UPDATE api_keys SET status = 'expired', updated_at = ? WHERE id = ?`
     ).bind(Date.now(), verifiedKey.id).run();
+    await trackAuthFailure(c.env, ip);
     throw new HTTPException(401, { message: 'API key has expired' });
   }
   
@@ -290,7 +337,7 @@ export async function apiKeyMiddleware(c: Context<{ Bindings: Env }>, next: Next
 }
 
 // Combined middleware: accepts either session auth OR API key auth
-export async function authOrApiKeyMiddleware(c: Context<{ Bindings: Env }>, next: Next) {
+export async function authOrApiKeyMiddleware(c: Context<{ Bindings: Env; Variables: Variables }>, next: Next) {
   // Try session auth first
   const sessionToken = getSessionTokenFromRequest(c.req.raw);
   if (sessionToken) {

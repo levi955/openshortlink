@@ -1,0 +1,64 @@
+// API Key schemas with type inference
+// Phase 4: Schema Composition & Type Inference
+
+import { z } from 'zod';
+
+// ============================================================================
+// Validation Patterns
+// ============================================================================
+
+/**
+ * IP address validation regex (IPv4 and IPv6)
+ * IPv4: standard dotted decimal format (e.g., 192.168.1.1)
+ * IPv6: supports full, compressed, and mixed formats
+ */
+const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:)*::(?:[0-9a-fA-F]{1,4}:)*[0-9a-fA-F]{1,4})|(?:::(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4})|(?:(?:[0-9a-fA-F]{1,4}:){1,7}::)|(?:(?:[0-9a-fA-F]{1,4}:){6}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))|(?:(?:[0-9a-fA-F]{1,4}:)*::(?:[0-9a-fA-F]{1,4}:)*(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))|(?:::1|::)$/;
+
+/**
+ * IP address validation schema
+ */
+const ipAddressSchema = z.string().regex(ipRegex, 'Invalid IP address format');
+
+// ============================================================================
+// API Key Schemas
+// ============================================================================
+
+/**
+ * Lenient expiration schema - accepts both:
+ * - Unix timestamp (number in milliseconds)
+ * - ISO 8601 date string (e.g., "2025-12-18T23:50:00Z")
+ * Transforms string to timestamp for storage
+ */
+const lenientExpiresAtSchema = z.union([
+  z.number(),
+  z.string().transform((val) => {
+    const date = new Date(val);
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date format');
+    }
+    return date.getTime();
+  }),
+]).nullable().optional();
+
+export const createApiKeySchema = z.object({
+  name: z.string().min(1).max(255),
+  domain_ids: z.array(z.string()).optional(),
+  ip_whitelist: z.array(ipAddressSchema).optional(),
+  allow_all_ips: z.boolean().optional().default(false),
+  expires_at: lenientExpiresAtSchema,
+});
+
+export const updateApiKeySchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  domain_ids: z.array(z.string()).optional(),
+  ip_whitelist: z.array(ipAddressSchema).optional(),
+  allow_all_ips: z.boolean().optional(),
+  expires_at: lenientExpiresAtSchema,
+});
+
+// ============================================================================
+// Type Inference
+// ============================================================================
+
+export type CreateApiKeyInput = z.infer<typeof createApiKeySchema>;
+export type UpdateApiKeyInput = z.infer<typeof updateApiKeySchema>;

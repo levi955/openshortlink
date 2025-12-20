@@ -8,39 +8,31 @@ import { getUserByUsername, getUserByEmail, getUserById, createUser, updateLastL
 import { hashPassword, verifyPassword } from '../utils/crypto';
 import { createSession, deleteSession, getRefreshToken, deleteRefreshToken, countUserRefreshTokens } from '../services/session';
 import { createRateLimit } from '../middleware/rateLimit';
+import { validateJson } from '../middleware/validate';
 import { optionalAuth, authMiddleware } from '../middleware/auth';
 import { generateMFASecret, verifyMFACode, generateBackupCodes, verifyBackupCode, createMFATempToken, getMFATempToken, deleteMFATempToken } from '../services/mfa';
 import { updateUser } from '../db/users';
 import { logAuditEvent, getAuditLogs, getIpAddress, getUserAgent, type AuditEventType, cleanupOldAuditLogs } from '../services/audit';
+import {
+  loginSchema,
+  registerSchema,
+  refreshTokenSchema,
+  mfaVerifySchema,
+  mfaVerifySetupSchema,
+  changePasswordSchema,
+} from '../schemas';
 
 const authRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-const loginSchema = z.object({
-  username: z.string().min(1),
-  password: z.string().min(1), // Password validation only for login, not complexity check
-});
-
-const registerSchema = z.object({
-  username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_-]+$/, { error: 'Username can only contain letters, numbers, underscore, and hyphen' }),
-  email: z.string().email().optional(),
-  password: z.string()
-    .min(12, { message: 'Password must be at least 12 characters long' })
-    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
-    .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
-    .regex(/[0-9]/, { message: 'Password must contain at least one number' })
-    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, { message: 'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"\\|,.<>/? etc.)' }),
-  role: z.enum(['admin', 'user', 'analyst', 'owner']).default('admin'), // owner kept for backward compatibility
-  setup_token: z.string().optional(), // Required for first user creation
-});
+// Schemas imported from ../schemas
 
 // Login
 authRouter.post('/login', createRateLimit({
   window: 60,
   max: 5,
   key: (c) => `auth:login:${c.req.header('CF-Connecting-IP') || 'unknown'}`,
-}), async (c) => {
-  const body = await c.req.json();
-  const validated = loginSchema.parse(body);
+}), validateJson(loginSchema), async (c) => {
+  const validated = c.req.valid('json');
 
   // Find user by username or email
   let user = await getUserByUsername(c.env, validated.username);
@@ -145,13 +137,12 @@ authRouter.post('/register', createRateLimit({
   window: 60,
   max: 3,
   key: (c) => `auth:register:${c.req.header('CF-Connecting-IP') || 'unknown'}`,
-}), optionalAuth, async (c) => {
+}), optionalAuth, validateJson(registerSchema), async (c) => {
   // Check if any users exist
   const existingUsers = await c.env.DB.prepare('SELECT COUNT(*) as count FROM users').first<{ count: number }>();
   const userCount = existingUsers?.count || 0;
 
-  const body = await c.req.json();
-  const validated = registerSchema.parse(body);
+  const validated = c.req.valid('json');
 
   // If users already exist, registration is disabled
   if (userCount > 0) {
@@ -292,10 +283,7 @@ authRouter.post('/logout', optionalAuth, async (c) => {
   return c.json({ success: true, message: 'Logged out successfully' });
 });
 
-// Refresh access token
-const refreshTokenSchema = z.object({
-  refresh_token: z.string().optional(), // Optional - can also come from cookie
-});
+// Refresh access token - schema imported from ../schemas
 
 authRouter.post('/refresh', async (c) => {
   const body = await c.req.json().catch(() => ({}));
@@ -502,10 +490,7 @@ authRouter.post('/mfa/setup', authMiddleware, async (c) => {
   });
 });
 
-// MFA Verify Setup - Verify code to enable MFA
-const mfaVerifySetupSchema = z.object({
-  code: z.string().regex(/^[0-9]{6}$/, { message: 'MFA code must be exactly 6 digits' }),
-});
+// MFA Verify Setup - schema imported from ../schemas
 
 authRouter.post('/mfa/verify-setup', authMiddleware, async (c) => {
   const user = c.get('user') as { id: string; role: string };
@@ -578,12 +563,7 @@ authRouter.post('/mfa/disable', authMiddleware, async (c) => {
   });
 });
 
-// MFA Verify (for login)
-const mfaVerifySchema = z.object({
-  mfa_token: z.string().min(1),
-  code: z.string().regex(/^[0-9]{6}$/, { message: 'MFA code must be exactly 6 digits' }).optional(),
-  backup_code: z.string().regex(/^[0-9]{8}$/, { message: 'Backup code must be exactly 8 digits' }).optional(),
-});
+// MFA Verify (for login) - schema imported from ../schemas
 
 authRouter.post('/mfa/verify', async (c) => {
   const body = await c.req.json();
@@ -698,16 +678,7 @@ authRouter.post('/mfa/verify', async (c) => {
   });
 });
 
-// Change password
-const changePasswordSchema = z.object({
-  current_password: z.string().min(1),
-  new_password: z.string()
-    .min(12, { message: 'Password must be at least 12 characters long' })
-    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
-    .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
-    .regex(/[0-9]/, { message: 'Password must contain at least one number' })
-    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, { message: 'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"\\|,.<>/? etc.)' }),
-});
+// Change password - schema imported from ../schemas
 
 authRouter.post('/change-password', authMiddleware, async (c) => {
   const user = c.get('user') as { id: string };
@@ -816,10 +787,9 @@ authRouter.post('/token', authMiddleware, async (c) => {
     const validated = createTokenSchema.safeParse(body);
     
     if (!validated.success) {
-      console.error('Token creation validation failed:', validated.error.errors);
+      console.error('Token creation validation failed:', validated.error.issues);
       throw new HTTPException(400, { 
-        message: 'Invalid request body',
-        errors: validated.error.errors.map(e => ({ path: e.path.join('.'), message: e.message }))
+        message: 'Invalid request body: ' + validated.error.issues.map(e => e.message).join(', ')
       });
     }
     
@@ -878,8 +848,7 @@ authRouter.post('/token', authMiddleware, async (c) => {
     
     // Return detailed error for debugging
     throw new HTTPException(500, { 
-      message: 'Failed to create token',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      message: 'Failed to create token: ' + (error instanceof Error ? error.message : 'Unknown error')
     });
   }
 });
