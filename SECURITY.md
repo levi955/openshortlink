@@ -47,7 +47,7 @@ OpenShort.link implements multiple layers of security to protect your data and i
 ### Authentication & Access Control
 
 - **Multi-Factor Authentication (MFA)**: TOTP-based two-factor authentication for enhanced account security
-- **Role-Based Access Control (RBAC)**: Four permission levels (Owner, Admin, Editor, Viewer) with granular access controls
+- **Role-Based Access Control (RBAC)**: Four permission levels (owner, admin, user, analyst) with granular access controls
 - **No Public Registration**: Only administrators can create new user accounts
 - **Session Management**: Secure, HttpOnly cookies with SameSite protection and 7-day expiration
 - **Password Security**: PBKDF2 hashing with 100,000 iterations and SHA-256
@@ -80,7 +80,7 @@ For production deployments, we recommend configuring Cloudflare WAF (Web Applica
 
 #### IP Restriction
 Limit dashboard and API access to trusted IP addresses:
-```
+```text
 Rule: (http.request.uri.path starts with "/dashboard" or http.request.uri.path starts with "/api") 
       and ip.src not in {your.trusted.ip.address}
 Action: Block
@@ -88,7 +88,7 @@ Action: Block
 
 #### Geographic Restrictions
 Block access from unauthorized countries:
-```
+```text
 Rule: (http.request.uri.path starts with "/dashboard" or http.request.uri.path starts with "/api") 
       and ip.geoip.country not in {"US" "GB" "AU"}
 Action: Block
@@ -96,7 +96,7 @@ Action: Block
 
 #### Enhanced Rate Limiting
 Add edge-level rate limiting:
-```
+```text
 Rule: http.request.uri.path starts with "/dashboard" or http.request.uri.path starts with "/api"
 Limit: 100 requests per 10 minutes
 Action: Block for 1 hour

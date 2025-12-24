@@ -16,28 +16,77 @@ const DOMAIN_CACHE_TTL = 5 * 60;
 // Default: 5 failures per 2 hours (7200 seconds) for production security
 // Can be overridden in wrangler.toml for development/testing (e.g., 60 seconds)
 const getFailedAuthLimit = (env: Env): number => {
-  return parseInt(env.FAILED_AUTH_LIMIT || '5');
+  const parsed = parseInt(env.FAILED_AUTH_LIMIT || '5');
+  return isNaN(parsed) ? 5 : parsed;
 };
 
 const getFailedAuthWindow = (env: Env): number => {
-  return parseInt(env.FAILED_AUTH_WINDOW || '7200'); // Default 2 hours
+  const parsed = parseInt(env.FAILED_AUTH_WINDOW || '7200');
+  return isNaN(parsed) ? 7200 : parsed; // Default 2 hours
 };
 
+// Rate limit data structure for token bucket algorithm
+interface RateLimitData {
+  firstFailure: number;  // Unix timestamp (seconds) of first failure in window
+  count: number;         // Number of failures in current window
+}
+
 // Helper: Check if IP is rate limited due to too many auth failures
+// Uses token bucket algorithm to prevent boundary attacks
 async function checkAuthFailureRateLimit(env: Env, ip: string): Promise<boolean> {
   const window = getFailedAuthWindow(env);
   const limit = getFailedAuthLimit(env);
-  const key = `auth_fail:${ip}:${Math.floor(Date.now() / 1000 / window)}`;
-  const count = parseInt(await env.CACHE.get(key) || '0');
-  return count >= limit;
+  const key = `auth_fail:${ip}`;
+  const data = await env.CACHE.get(key);
+  
+  if (!data) return false;
+  
+  try {
+    const parsed: RateLimitData = JSON.parse(data);
+    const now = Math.floor(Date.now() / 1000);
+    
+    // If window has expired, not rate limited
+    if (now - parsed.firstFailure > window) {
+      return false;
+    }
+    
+    // Check if count exceeds limit
+    return parsed.count >= limit;
+  } catch {
+    return false;
+  }
 }
 
 // Helper: Increment auth failure counter for IP
+// Uses token bucket algorithm - tracks first failure timestamp
 async function trackAuthFailure(env: Env, ip: string): Promise<void> {
   const window = getFailedAuthWindow(env);
-  const key = `auth_fail:${ip}:${Math.floor(Date.now() / 1000 / window)}`;
-  const count = parseInt(await env.CACHE.get(key) || '0');
-  await env.CACHE.put(key, String(count + 1), { expirationTtl: window });
+  const key = `auth_fail:${ip}`;
+  const existing = await env.CACHE.get(key);
+  const now = Math.floor(Date.now() / 1000);
+  
+  if (existing) {
+    try {
+      const data: RateLimitData = JSON.parse(existing);
+      
+      // If still within same window, increment count
+      if (now - data.firstFailure < window) {
+        await env.CACHE.put(key, JSON.stringify({
+          firstFailure: data.firstFailure,
+          count: data.count + 1
+        }), { expirationTtl: window });
+        return;
+      }
+    } catch {
+      // Invalid data, start fresh
+    }
+  }
+  
+  // Start new window
+  await env.CACHE.put(key, JSON.stringify({
+    firstFailure: now,
+    count: 1
+  }), { expirationTtl: window });
 }
 
 // Helper: Get client IP from request
@@ -73,7 +122,8 @@ export async function authMiddleware(c: Context<{ Bindings: Env; Variables: Vari
   const session = await getSession(c.env, token);
   
   if (!session) {
-    await trackAuthFailure(c.env, ip);
+    // #3 FIX: Don't track expired sessions as failures
+    // Expired sessions are natural, not brute-force attempts
     throw new HTTPException(401, { message: 'Invalid or expired session' });
   }
 
@@ -283,13 +333,6 @@ export async function apiKeyMiddleware(c: Context<{ Bindings: Env; Variables: Va
   
   // If IP whitelist is required, check it
   if (verifiedKey.allow_all_ips !== 1 && verifiedKey.ip_whitelist) {
-    // Reject if IP cannot be determined
-    if (!clientIp || clientIp.trim() === '' || clientIp.trim() === 'unknown') {
-      throw new HTTPException(403, { 
-        message: 'Access forbidden' 
-      });
-    }
-    
     try {
       const allowedIps = JSON.parse(verifiedKey.ip_whitelist) as string[];
       // Normalize all whitelisted IPs (trim whitespace and filter empty)

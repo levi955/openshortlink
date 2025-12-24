@@ -940,8 +940,8 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
         </div>
         <div class="form-group" id="api-key-ip-whitelist-group" style="display: none;">
           <label for="api-key-ip-whitelist">IP Whitelist (one per line)</label>
-          <textarea id="api-key-ip-whitelist" rows="4" placeholder="192.168.1.1&#10;10.0.0.1"></textarea>
-          <small style="display: block; margin-top: 0.25rem; color: #666;">Enter one IP address per line</small>
+          <textarea id="api-key-ip-whitelist" rows="4" placeholder="192.168.1.1&#10;10.0.0.1&#10;2001:0db8:85a3::8a2e:0370:7334"></textarea>
+          <small style="display: block; margin-top: 0.25rem; color: #666;">Enter one IP address per line. Supports both IPv4 and IPv6 addresses.</small>
         </div>
         <div class="form-group">
           <label>
@@ -1084,8 +1084,11 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
               <li>Navigate to <strong>Workers & Pages</strong> → Your Worker → <strong>Settings</strong> → <strong>Triggers</strong></li>
               <li>Add routes matching the ones you configure here (e.g., <code>example.com/go/*</code>)</li>
             </ol>
-            <p style="margin: 0; font-size: 0.875rem; background: #fff3cd; border-left: 3px solid #ffc107; padding: 0.5rem; border-radius: 3px;">
+            <p style="margin: 0 0 0.5rem 0; font-size: 0.875rem; background: #fff3cd; border-left: 3px solid #ffc107; padding: 0.5rem; border-radius: 3px;">
               ⚠️ <strong>Avoid Conflicts:</strong> Ensure your routes don't clash with existing website paths. Use unique path prefixes (e.g., <code>/go/*</code>, <code>/r/*</code>, <code>/link/*</code>) that aren't used by your main website.
+            </p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; background: #e8f5e9; border-left: 3px solid #4caf50; padding: 0.5rem; border-radius: 3px;">
+              💡 <strong>Using the Entire Domain:</strong> You can use <code>/*</code> as a route to handle all paths on the domain without additional prefixes (e.g., <code>example.com/*</code>). <strong>Only use this if there's no existing website on this domain</strong>, as it will intercept all traffic.
             </p>
           </div>
           
@@ -3077,18 +3080,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
     let editingTagId = null;
     let editingCategoryId = null;
     
-    // HTML escaping function
-    function escapeHtml(text) {
-      if (!text) return '';
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;',
-      };
-      return String(text).replace(/[&<>"']/g, m => map[m]);
-    }
+    // Note: escapeHtml is defined earlier in the script
     
     // Escape for HTML attribute values (handles quotes and special chars)
     function escapeAttr(text) {
@@ -8423,6 +8415,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
           { name: 'link_id', type: 'string', required: false, description: 'Filter by single link ID' },
           { name: 'link_ids', type: 'string', required: false, description: 'Filter by multiple link IDs (comma-separated)' },
           { name: 'domain_id', type: 'string', required: false, description: 'Filter by domain ID' },
+          { name: 'domain_names', type: 'string', required: false, description: 'Filter by domain names (comma-separated)' },
           { name: 'start_date', type: 'string', required: false, description: 'Start date (ISO format)' },
           { name: 'end_date', type: 'string', required: false, description: 'End date (ISO format)' },
           { name: 'group_by', type: 'string', required: false, description: 'Group by (day, week, month, default: day)' },
@@ -8869,15 +8862,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
       }
     }
     
-    function escapeHtml(text) {
-      if (typeof text !== 'string') text = String(text);
-      return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
+    // Note: escapeHtml is defined earlier in the script
     
     function renderApiDocumentation() {
       const container = document.getElementById('api-endpoints-docs');
@@ -13730,7 +13715,6 @@ renderLinkAnalyticsUTM = function (container, data) {
     item.medium || '-',
     item.clicks.toLocaleString()
   ]);
-  renderPaginatedTable(container, 'UTM Campaigns', ['Campaign', 'Source', 'Medium', 'Clicks'], rows, 'utm_table');
   renderPaginatedTable(container, 'UTM Campaigns', ['Campaign', 'Source', 'Medium', 'Clicks'], rows, 'utm_table');
 };
 
