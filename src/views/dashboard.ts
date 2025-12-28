@@ -1780,7 +1780,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
           
           tbody.innerHTML = '<tr><td colspan="7">' + errorMessage + '</td></tr>';
         }
-        showToast('Failed to load links: ' + (error.message || 'Unknown error'), 'error');
+        showToast('Failed to load links: ' + (errorStr || 'Unknown error'), 'error');
       } finally {
         // Loading state is cleared when content is replaced
       }
@@ -12818,13 +12818,17 @@ if (backBtn) {
   });
 }
 
-// Quick range buttons handler
+// Quick range buttons handler (only for link-analytics page)
 document.addEventListener('click', function(e) {
   const target = e.target;
-  if (target && target.closest('.quick-ranges')) {
-    const rangeBtn = target.closest('button[data-range]');
-    if (rangeBtn && rangeBtn.dataset.range) {
-      setLinkAnalyticsRange(rangeBtn.dataset.range);
+  // Only handle if we're on link-analytics page to prevent cross-page pollution
+  const linkAnalyticsPage = document.getElementById('link-analytics-page');
+  if (linkAnalyticsPage && linkAnalyticsPage.classList.contains('active')) {
+    if (target && target.closest('.quick-ranges')) {
+      const rangeBtn = target.closest('button[data-range]');
+      if (rangeBtn && rangeBtn.dataset.range) {
+        setLinkAnalyticsRange(rangeBtn.dataset.range);
+      }
     }
   }
 });

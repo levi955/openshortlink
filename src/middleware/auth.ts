@@ -32,7 +32,7 @@ interface RateLimitData {
 }
 
 // Helper: Check if IP is rate limited due to too many auth failures
-// Uses token bucket algorithm to prevent boundary attacks
+// Uses fixed-window rate limiting to prevent boundary attacks
 async function checkAuthFailureRateLimit(env: Env, ip: string): Promise<boolean> {
   const window = getFailedAuthWindow(env);
   const limit = getFailedAuthLimit(env);
@@ -58,7 +58,7 @@ async function checkAuthFailureRateLimit(env: Env, ip: string): Promise<boolean>
 }
 
 // Helper: Increment auth failure counter for IP
-// Uses token bucket algorithm - tracks first failure timestamp
+// Uses fixed-window rate limiting - tracks first failure timestamp
 async function trackAuthFailure(env: Env, ip: string): Promise<void> {
   const window = getFailedAuthWindow(env);
   const key = `auth_fail:${ip}`;

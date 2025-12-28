@@ -110,3 +110,13 @@ export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 export type MFAVerifySetupInput = z.infer<typeof mfaVerifySetupSchema>;
 export type MFAVerifyInput = z.infer<typeof mfaVerifySchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+// ============================================================================
+// Create Token Schema (for testing/custom expiration)
+// ============================================================================
+
+export const createTokenSchema = z.object({
+  expires_in: z.number().min(60).max(3600).optional(), // 60 seconds to 1 hour (KV minimum is 60)
+});
+
+export type CreateTokenInput = z.infer<typeof createTokenSchema>;

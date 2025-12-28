@@ -13,6 +13,7 @@ import { optionalAuth, authMiddleware } from '../middleware/auth';
 import { generateMFASecret, verifyMFACode, generateBackupCodes, verifyBackupCode, createMFATempToken, getMFATempToken, deleteMFATempToken } from '../services/mfa';
 import { updateUser } from '../db/users';
 import { logAuditEvent, getAuditLogs, getIpAddress, getUserAgent, type AuditEventType, cleanupOldAuditLogs } from '../services/audit';
+import { getSessionTokenFromRequest } from '../services/session';
 import {
   loginSchema,
   registerSchema,
@@ -20,6 +21,7 @@ import {
   mfaVerifySchema,
   mfaVerifySetupSchema,
   changePasswordSchema,
+  createTokenSchema,
 } from '../schemas';
 
 const authRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -284,13 +286,16 @@ authRouter.post('/logout', optionalAuth, async (c) => {
 });
 
 // Refresh access token - schema imported from ../schemas
+// Note: Supports both JSON body and cookie-only (empty body) scenarios
 
 authRouter.post('/refresh', createRateLimit({
   window: 60,
   max: 10,
   key: (c) => `auth:refresh:${c.req.header('CF-Connecting-IP') || 'unknown'}`,
-}), validateJson(refreshTokenSchema), async (c) => {
-  const validated = c.req.valid('json');
+}), async (c) => {
+  // Handle empty body gracefully (for cookie-only requests)
+  const body = await c.req.json().catch(() => ({}));
+  const validated = refreshTokenSchema.parse(body);
 
   // Get refresh token from body or cookie
   let refreshToken = validated.refresh_token;
@@ -447,8 +452,7 @@ authRouter.post('/audit/cleanup', authMiddleware, async (c) => {
   });
 });
 
-// Import helper function
-import { getSessionTokenFromRequest } from '../services/session';
+
 
 // MFA Setup - Generate QR code and secret (admin/owner only)
 authRouter.post('/mfa/setup', authMiddleware, async (c) => {
@@ -774,10 +778,7 @@ authRouter.post('/mfa/regenerate-backup-codes', authMiddleware, async (c) => {
   });
 });
 
-// Create token with custom expiration (for testing)
-const createTokenSchema = z.object({
-  expires_in: z.number().min(60).max(3600).optional(), // 60 seconds to 1 hour (KV minimum is 60)
-});
+// Create token with custom expiration (for testing) - schema imported from ../schemas
 
 authRouter.post('/token', authMiddleware, validateJson(createTokenSchema), async (c) => {
   try {
