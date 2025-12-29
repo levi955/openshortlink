@@ -89,7 +89,10 @@ export const mfaVerifySchema = z.object({
   mfa_token: z.string().min(1),
   code: mfaCodeSchema.optional(),
   backup_code: backupCodeSchema.optional(),
-});
+}).refine(
+  (data) => data.code !== undefined || data.backup_code !== undefined,
+  { message: 'Either code or backup_code must be provided' }
+);
 
 // ============================================================================
 // Change Password Schema

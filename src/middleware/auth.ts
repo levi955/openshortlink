@@ -71,10 +71,12 @@ async function trackAuthFailure(env: Env, ip: string): Promise<void> {
       
       // If still within same window, increment count
       if (now - data.firstFailure < window) {
+        // Calculate remaining TTL to prevent window extension
+        const remainingTtl = window - (now - data.firstFailure);
         await env.CACHE.put(key, JSON.stringify({
           firstFailure: data.firstFailure,
           count: data.count + 1
-        }), { expirationTtl: window });
+        }), { expirationTtl: remainingTtl });
         return;
       }
     } catch {
@@ -323,7 +325,7 @@ export async function apiKeyMiddleware(c: Context<{ Bindings: Env; Variables: Va
     await c.env.DB.prepare(
       `UPDATE api_keys SET status = 'expired', updated_at = ? WHERE id = ?`
     ).bind(Date.now(), verifiedKey.id).run();
-    await trackAuthFailure(c.env, ip);
+    // Don't track expired keys as failures (same as expired sessions - natural expiration, not attack)
     throw new HTTPException(401, { message: 'API key has expired' });
   }
   
