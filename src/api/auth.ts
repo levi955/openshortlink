@@ -779,12 +779,15 @@ authRouter.post('/mfa/regenerate-backup-codes', authMiddleware, async (c) => {
 });
 
 // Create token with custom expiration (for testing) - schema imported from ../schemas
+// Note: Supports empty body (defaults to 1 hour expiration)
 
-authRouter.post('/token', authMiddleware, validateJson(createTokenSchema), async (c) => {
+authRouter.post('/token', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as { id: string; username?: string; email?: string; role: string };
     
-    const validated = c.req.valid('json');
+    // Handle empty body gracefully (for default expiration)
+    const body = await c.req.json().catch(() => ({}));
+    const validated = createTokenSchema.parse(body);
     
     const expiresIn = validated.expires_in || 3600; // Default 1 hour
     

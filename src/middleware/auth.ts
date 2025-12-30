@@ -59,6 +59,22 @@ async function checkAuthFailureRateLimit(env: Env, ip: string): Promise<boolean>
 
 // Helper: Increment auth failure counter for IP
 // Uses fixed-window rate limiting - tracks first failure timestamp
+//
+// IMPORTANT: Cloudflare KV Limitation
+// ------------------------------------
+// KV requires a minimum TTL of 60 seconds. We considered using a calculated
+// `remainingTtl = window - elapsed_time` to prevent window extension, but this
+// fails when elapsed_time > 0 because remainingTtl would be < 60 seconds.
+//
+// Trade-off: We use the full `window` TTL for each update, which means the
+// rate limit window CAN extend if an attacker spaces requests. For example:
+// - Failure at time 0s → expires at 60s
+// - Failure at time 30s → expires at 90s (extended by 30s)
+//
+// This is acceptable because:
+// 1. Most brute-force attacks are rapid-fire, not strategically spaced
+// 2. Working rate limiting > perfect rate limiting
+// 3. The extension is limited to `window` seconds maximum per request
 async function trackAuthFailure(env: Env, ip: string): Promise<void> {
   const window = getFailedAuthWindow(env);
   const key = `auth_fail:${ip}`;
@@ -71,12 +87,11 @@ async function trackAuthFailure(env: Env, ip: string): Promise<void> {
       
       // If still within same window, increment count
       if (now - data.firstFailure < window) {
-        // Calculate remaining TTL to prevent window extension
-        const remainingTtl = window - (now - data.firstFailure);
+        // Use full window TTL - see comment above about KV 60s minimum TTL limitation
         await env.CACHE.put(key, JSON.stringify({
           firstFailure: data.firstFailure,
           count: data.count + 1
-        }), { expirationTtl: remainingTtl });
+        }), { expirationTtl: window });
         return;
       }
     } catch {
