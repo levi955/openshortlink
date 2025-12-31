@@ -756,7 +756,7 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
           <div class="settings-content" style="max-width: 800px;">
             <div style="margin-bottom: 2rem;">
                <h2>About <a href="https://openshort.link" target="_blank" style="text-decoration: none; color: inherit;">OpenShort.link</a></h2>
-               <p style="margin-top: 0.5rem; line-height: 1.6;"><a href="https://openshort.link" target="_blank" style="text-decoration: none; color: var(--primary-color); font-weight: 500;">OpenShort.link</a> is an all-in-one, open-source link management platform built on Cloudflare Workers, offering high-performance redirects, comprehensive analytics, and multi-tenant capabilities.</p>
+               <p style="margin-top: 0.5rem; line-height: 1.6;"><a href="https://openshort.link" target="_blank" style="text-decoration: none; color: var(--primary-color); font-weight: 500;">OpenShort.link</a> is an all-in-one, open-source link management platform built on Cloudflare Workers, offering high-performance redirects, comprehensive analytics, and multi domain.</p>
 
             </div>
             <div style="margin-bottom: 2rem;">
@@ -765,7 +765,8 @@ export function dashboardHtml(csrfToken: string, nonce: string): string {
                  <li style="margin-bottom: 0.75rem;"><a href="https://openshort.link/docs" target="_blank" style="text-decoration: none; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem;">📚 Documentation</a></li>
                  <li style="margin-bottom: 0.75rem;"><a href="https://openshort.link/roadmap" target="_blank" style="text-decoration: none; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem;">🗺️ Roadmap</a></li>
                  <li style="margin-bottom: 0.75rem;"><a href="https://github.com/idhamsy/openshortlink/issues" target="_blank" style="text-decoration: none; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem;">🐛 Report a bug</a></li>
-               </ul>
+                  <li style="margin-bottom: 0.75rem;"><a href="https://openshort.link/updates" target="_blank" style="text-decoration: none; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem;">🆕 Update to latest version</a></li>
+                </ul>
             </div>
 
             <div style="margin-bottom: 2rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
