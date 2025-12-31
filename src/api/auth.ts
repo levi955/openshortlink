@@ -8,39 +8,33 @@ import { getUserByUsername, getUserByEmail, getUserById, createUser, updateLastL
 import { hashPassword, verifyPassword } from '../utils/crypto';
 import { createSession, deleteSession, getRefreshToken, deleteRefreshToken, countUserRefreshTokens } from '../services/session';
 import { createRateLimit } from '../middleware/rateLimit';
+import { validateJson } from '../middleware/validate';
 import { optionalAuth, authMiddleware } from '../middleware/auth';
 import { generateMFASecret, verifyMFACode, generateBackupCodes, verifyBackupCode, createMFATempToken, getMFATempToken, deleteMFATempToken } from '../services/mfa';
 import { updateUser } from '../db/users';
 import { logAuditEvent, getAuditLogs, getIpAddress, getUserAgent, type AuditEventType, cleanupOldAuditLogs } from '../services/audit';
+import { getSessionTokenFromRequest } from '../services/session';
+import {
+  loginSchema,
+  registerSchema,
+  refreshTokenSchema,
+  mfaVerifySchema,
+  mfaVerifySetupSchema,
+  changePasswordSchema,
+  createTokenSchema,
+} from '../schemas';
 
 const authRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-const loginSchema = z.object({
-  username: z.string().min(1),
-  password: z.string().min(1), // Password validation only for login, not complexity check
-});
-
-const registerSchema = z.object({
-  username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_-]+$/, { error: 'Username can only contain letters, numbers, underscore, and hyphen' }),
-  email: z.string().email().optional(),
-  password: z.string()
-    .min(12, { message: 'Password must be at least 12 characters long' })
-    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
-    .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
-    .regex(/[0-9]/, { message: 'Password must contain at least one number' })
-    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, { message: 'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"\\|,.<>/? etc.)' }),
-  role: z.enum(['admin', 'user', 'analyst', 'owner']).default('admin'), // owner kept for backward compatibility
-  setup_token: z.string().optional(), // Required for first user creation
-});
+// Schemas imported from ../schemas
 
 // Login
 authRouter.post('/login', createRateLimit({
   window: 60,
   max: 5,
   key: (c) => `auth:login:${c.req.header('CF-Connecting-IP') || 'unknown'}`,
-}), async (c) => {
-  const body = await c.req.json();
-  const validated = loginSchema.parse(body);
+}), validateJson(loginSchema), async (c) => {
+  const validated = c.req.valid('json');
 
   // Find user by username or email
   let user = await getUserByUsername(c.env, validated.username);
@@ -145,13 +139,12 @@ authRouter.post('/register', createRateLimit({
   window: 60,
   max: 3,
   key: (c) => `auth:register:${c.req.header('CF-Connecting-IP') || 'unknown'}`,
-}), optionalAuth, async (c) => {
+}), optionalAuth, validateJson(registerSchema), async (c) => {
   // Check if any users exist
   const existingUsers = await c.env.DB.prepare('SELECT COUNT(*) as count FROM users').first<{ count: number }>();
   const userCount = existingUsers?.count || 0;
 
-  const body = await c.req.json();
-  const validated = registerSchema.parse(body);
+  const validated = c.req.valid('json');
 
   // If users already exist, registration is disabled
   if (userCount > 0) {
@@ -292,12 +285,15 @@ authRouter.post('/logout', optionalAuth, async (c) => {
   return c.json({ success: true, message: 'Logged out successfully' });
 });
 
-// Refresh access token
-const refreshTokenSchema = z.object({
-  refresh_token: z.string().optional(), // Optional - can also come from cookie
-});
+// Refresh access token - schema imported from ../schemas
+// Note: Supports both JSON body and cookie-only (empty body) scenarios
 
-authRouter.post('/refresh', async (c) => {
+authRouter.post('/refresh', createRateLimit({
+  window: 60,
+  max: 10,
+  key: (c) => `auth:refresh:${c.req.header('CF-Connecting-IP') || 'unknown'}`,
+}), async (c) => {
+  // Handle empty body gracefully (for cookie-only requests)
   const body = await c.req.json().catch(() => ({}));
   const validated = refreshTokenSchema.parse(body);
 
@@ -456,8 +452,7 @@ authRouter.post('/audit/cleanup', authMiddleware, async (c) => {
   });
 });
 
-// Import helper function
-import { getSessionTokenFromRequest } from '../services/session';
+
 
 // MFA Setup - Generate QR code and secret (admin/owner only)
 authRouter.post('/mfa/setup', authMiddleware, async (c) => {
@@ -502,20 +497,16 @@ authRouter.post('/mfa/setup', authMiddleware, async (c) => {
   });
 });
 
-// MFA Verify Setup - Verify code to enable MFA
-const mfaVerifySetupSchema = z.object({
-  code: z.string().regex(/^[0-9]{6}$/, { message: 'MFA code must be exactly 6 digits' }),
-});
+// MFA Verify Setup - schema imported from ../schemas
 
-authRouter.post('/mfa/verify-setup', authMiddleware, async (c) => {
+authRouter.post('/mfa/verify-setup', authMiddleware, validateJson(mfaVerifySetupSchema), async (c) => {
   const user = c.get('user') as { id: string; role: string };
 
   if (user.role !== 'owner' && user.role !== 'admin') {
     throw new HTTPException(403, { message: 'Only owner and admin roles can enable MFA' });
   }
 
-  const body = await c.req.json();
-  const validated = mfaVerifySetupSchema.parse(body);
+  const validated = c.req.valid('json');
 
   // Get user with MFA secret
   const fullUser = await getUserById(c.env, user.id);
@@ -578,16 +569,10 @@ authRouter.post('/mfa/disable', authMiddleware, async (c) => {
   });
 });
 
-// MFA Verify (for login)
-const mfaVerifySchema = z.object({
-  mfa_token: z.string().min(1),
-  code: z.string().regex(/^[0-9]{6}$/, { message: 'MFA code must be exactly 6 digits' }).optional(),
-  backup_code: z.string().regex(/^[0-9]{8}$/, { message: 'Backup code must be exactly 8 digits' }).optional(),
-});
+// MFA Verify (for login) - schema imported from ../schemas
 
-authRouter.post('/mfa/verify', async (c) => {
-  const body = await c.req.json();
-  const validated = mfaVerifySchema.parse(body);
+authRouter.post('/mfa/verify', validateJson(mfaVerifySchema), async (c) => {
+  const validated = c.req.valid('json');
 
   if (!validated.code && !validated.backup_code) {
     throw new HTTPException(400, { message: 'Either code or backup_code is required' });
@@ -698,21 +683,11 @@ authRouter.post('/mfa/verify', async (c) => {
   });
 });
 
-// Change password
-const changePasswordSchema = z.object({
-  current_password: z.string().min(1),
-  new_password: z.string()
-    .min(12, { message: 'Password must be at least 12 characters long' })
-    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
-    .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
-    .regex(/[0-9]/, { message: 'Password must contain at least one number' })
-    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, { message: 'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"\\|,.<>/? etc.)' }),
-});
+// Change password - schema imported from ../schemas
 
-authRouter.post('/change-password', authMiddleware, async (c) => {
+authRouter.post('/change-password', authMiddleware, validateJson(changePasswordSchema), async (c) => {
   const user = c.get('user') as { id: string };
-  const body = await c.req.json();
-  const validated = changePasswordSchema.parse(body);
+  const validated = c.req.valid('json');
 
   // Get user with password hash
   const fullUser = await getUserById(c.env, user.id);
@@ -803,27 +778,18 @@ authRouter.post('/mfa/regenerate-backup-codes', authMiddleware, async (c) => {
   });
 });
 
-// Create token with custom expiration (for testing)
-const createTokenSchema = z.object({
-  expires_in: z.number().min(60).max(3600).optional(), // 60 seconds to 1 hour (KV minimum is 60)
-});
+// Create token with custom expiration (for testing) - schema imported from ../schemas
+// Note: Supports empty body (defaults to 1 hour expiration)
 
 authRouter.post('/token', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as { id: string; username?: string; email?: string; role: string };
     
+    // Handle empty body gracefully (for default expiration)
     const body = await c.req.json().catch(() => ({}));
-    const validated = createTokenSchema.safeParse(body);
+    const validated = createTokenSchema.parse(body);
     
-    if (!validated.success) {
-      console.error('Token creation validation failed:', validated.error.errors);
-      throw new HTTPException(400, { 
-        message: 'Invalid request body',
-        errors: validated.error.errors.map(e => ({ path: e.path.join('.'), message: e.message }))
-      });
-    }
-    
-    const expiresIn = validated.data.expires_in || 3600; // Default 1 hour
+    const expiresIn = validated.expires_in || 3600; // Default 1 hour
     
     // Validate expiration range (Cloudflare KV requires minimum 60 seconds)
     if (expiresIn < 60 || expiresIn > 3600) {
